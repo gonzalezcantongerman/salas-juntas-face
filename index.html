@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FACE Financial Advisors | Salas de Juntas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --face-navy:#3F4FA3;
+    --face-light:#8B98D9;
+    --face-dark:#2B3673;
+    --ink:#111418;
+    --bg:#F5F6FA;
+    --card:#FFFFFF;
+    --border:#E3E6F0;
+    --green:#1F9D55;
+    --red:#D64545;
+    --muted:#6B7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',Arial,sans-serif;
+    background:
+      radial-gradient(ellipse 900px 500px at 100% -10%, rgba(63,79,163,.07), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+  }
+  header{
+    background:linear-gradient(135deg, var(--face-dark) 0%, var(--face-navy) 100%);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 28px;
+    position:sticky;
+    top:0;
+    z-index:50;
+    box-shadow:0 2px 16px rgba(43,54,115,.18);
+  }
+  header .brand{display:flex;align-items:center;gap:14px;}
+  header .brand .logo-plate{
+    background:#fff;border-radius:10px;padding:7px 14px;display:flex;align-items:center;
+    box-shadow:0 2px 6px rgba(0,0,0,.08);
+  }
+  header .brand .logo-plate img{height:26px;display:block;}
+  header .brand .title{
+    font-weight:700;
+    font-size:15px;
+    color:#fff;
+    border-left:1px solid rgba(255,255,255,.25);
+    padding-left:14px;
+    line-height:1.2;
+  }
+  header .brand .title span{
+    display:block;font-weight:500;font-size:11px;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;
+  }
+  #userBox{display:flex;align-items:center;gap:12px;font-size:14px;}
+  #userBox .name{font-weight:700;color:#fff;}
+  #loggedAs{color:rgba(255,255,255,.85);font-size:13.5px;}
+  #userBox #logoutBtn{
+    border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;
+    border-radius:20px;padding:6px 14px;cursor:pointer;font-size:12.5px;font-weight:600;
+  }
+  #userBox #logoutBtn:hover{background:rgba(255,255,255,.12);}
+  .btn-reservar-header{
+    border:none;background:#fff;color:var(--face-navy);border-radius:20px;
+    padding:10px 20px;cursor:pointer;font-size:13.5px;font-weight:700;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);transition:.15s;
+  }
+  .btn-reservar-header:hover{background:#EEF1FB;transform:translateY(-1px);}
+
+  .week-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+  .week-nav .week-range{font-weight:700;font-size:15px;color:var(--face-dark);}
+  .week-nav .week-controls{display:flex;align-items:center;gap:6px;}
+  .week-arrow{
+    border:1px solid var(--border);background:#fff;border-radius:8px;width:32px;height:32px;
+    font-size:16px;cursor:pointer;color:var(--face-navy);flex:0 0 auto;
+  }
+  .week-arrow:hover{background:var(--bg);}
+  .week-today-btn{
+    border:1px solid var(--border);background:#fff;border-radius:8px;height:32px;padding:0 12px;
+    font-size:12.5px;font-weight:600;color:var(--face-navy);cursor:pointer;
+  }
+  .week-today-btn:hover{background:var(--bg);}
+
+  /* CALENDARIO SEMANAL - estilo grilla tipo iPhone */
+  .cal-room-label{
+    font-weight:700;color:var(--face-dark);font-size:14.5px;margin:22px 0 10px;display:flex;align-items:center;gap:9px;
+  }
+  .cal-room-label .room-meta{font-size:12px;font-weight:500;color:var(--muted);}
+  .cal-room-dot{width:11px;height:11px;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px rgba(63,79,163,.12);}
+  .cal-grid-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 2px rgba(43,54,115,.04);}
+  table.cal-grid{width:100%;border-collapse:collapse;font-size:11.5px;min-width:680px;}
+  table.cal-grid th{
+    background:#FAFBFE;color:var(--muted);font-weight:600;text-align:center;padding:10px 4px;
+    border-bottom:1px solid var(--border);border-left:1px solid var(--border);position:sticky;top:0;
+  }
+  table.cal-grid th:first-child, table.cal-grid td.hour-col{border-left:none;}
+  table.cal-grid th .wd{display:block;font-size:10.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.03em;}
+  table.cal-grid th .dd{display:block;font-size:15px;font-weight:800;color:var(--ink);margin-top:1px;}
+  table.cal-grid th.is-today{background:linear-gradient(180deg, var(--face-navy), var(--face-dark));}
+  table.cal-grid th.is-today .wd, table.cal-grid th.is-today .dd{color:#fff;}
+  table.cal-grid td{border-left:1px solid var(--border);border-top:1px solid var(--border);padding:3px;vertical-align:middle;height:38px;}
+  table.cal-grid tr:nth-child(even) td:not(.hour-col){background:#FBFCFE;}
+  table.cal-grid td.hour-col{
+    background:#FAFBFE;color:var(--muted);font-weight:600;font-size:11px;white-space:nowrap;
+    padding:3px 12px;text-align:right;
+  }
+  .cal-cell-free{width:100%;height:100%;min-height:30px;border-radius:6px;cursor:pointer;transition:.12s;}
+  .cal-cell-free:hover{background:#EEF1FB;}
+  .cal-booking{
+    width:100%;height:100%;min-height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+    text-align:center;font-size:10.5px;font-weight:700;line-height:1.15;padding:2px;color:#fff;
+    background:linear-gradient(135deg, var(--face-navy), var(--face-dark));
+    overflow:hidden;box-shadow:0 1px 3px rgba(43,54,115,.25);cursor:pointer;transition:.12s;
+  }
+  .cal-booking:hover{transform:scale(1.03);box-shadow:0 2px 6px rgba(43,54,115,.35);}
+  .cal-booking.room-nasdaq{background:linear-gradient(135deg, var(--face-light), #6B79C4);color:#fff;}
+
+  main{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
+
+  /* LOGIN */
+  #loginScreen{
+    min-height:80vh;display:flex;align-items:center;justify-content:center;
+  }
+  .login-card{
+    background:#fff;border:1px solid var(--border);border-radius:20px;
+    padding:44px 36px 38px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(43,54,115,.18);
+    text-align:center;border-top:4px solid transparent;
+    background-image:linear-gradient(#fff,#fff), linear-gradient(90deg, var(--face-light), var(--face-navy), var(--face-dark));
+    background-origin:border-box;background-clip:padding-box, border-box;
+  }
+  .login-card img{height:50px;margin-bottom:20px;}
+  .login-card h1{font-size:19px;margin:0 0 6px;color:var(--face-dark);font-weight:800;}
+  .login-card p{font-size:13.5px;color:var(--muted);margin:0 0 24px;}
+  select#advisorSelect{
+    width:100%;padding:13px 14px;border-radius:10px;border:1.5px solid var(--border);
+    font-size:14px;font-family:inherit;background:#fff;color:var(--ink);margin-bottom:16px;
+  }
+  .btn-primary{
+    width:100%;background:linear-gradient(135deg, var(--face-navy), var(--face-dark));color:#fff;border:none;border-radius:10px;
+    padding:14px;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;
+    box-shadow:0 4px 14px rgba(63,79,163,.3);
+  }
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(63,79,163,.4);}
+  .btn-primary:disabled{background:#C9CEEB;cursor:not-allowed;box-shadow:none;transform:none;}
+
+  /* APP */
+  #appScreen{display:block;}
+  .tabs{
+    display:inline-flex;gap:2px;margin-bottom:24px;background:#fff;border:1px solid var(--border);
+    border-radius:14px;padding:4px;box-shadow:0 1px 3px rgba(43,54,115,.05);
+  }
+  .tab-btn{
+    border:none;background:none;padding:10px 20px;font-size:13.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;border-radius:10px;transition:.15s;
+  }
+  .tab-btn:hover{color:var(--face-navy);}
+  .tab-btn.active{color:#fff;background:var(--face-navy);box-shadow:0 2px 8px rgba(63,79,163,.3);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+
+  .panel{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:18px;
+    box-shadow:0 1px 2px rgba(43,54,115,.04), 0 8px 24px rgba(43,54,115,.04);
+  }
+  .panel h2{margin:0 0 16px;font-size:16px;color:var(--face-dark);font-weight:700;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:640px){.grid2{grid-template-columns:1fr;}}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  @media (max-width:760px){.grid3{grid-template-columns:1fr;}}
+
+  label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em;}
+  input[type=date], select, input[type=text]{
+    width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);
+    font-size:14px;font-family:inherit;background:#fff;color:var(--ink);
+  }
+  .field{margin-bottom:14px;}
+
+  .room-card{border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+  .room-card .room-name{font-weight:700;color:var(--face-dark);font-size:14px;}
+  .room-card .room-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  .slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:9px;margin-top:12px;}
+  .slot{
+    border:1.5px solid var(--border);border-radius:10px;padding:9px 6px;text-align:center;font-size:12.5px;
+    cursor:pointer;background:#fff;font-weight:700;color:var(--ink);transition:.12s;
+  }
+  .slot:hover{border-color:var(--face-navy);background:#F7F8FD;transform:translateY(-1px);}
+  .slot.selected{background:var(--face-navy);color:#fff;border-color:var(--face-navy);box-shadow:0 3px 10px rgba(63,79,163,.35);}
+  .slot.selected:hover{transform:none;}
+  .slot.taken{
+    background:#FBEAEA;color:#B23A3A;border-color:#F3CFCF;cursor:not-allowed;font-weight:600;
+  }
+  .slot.taken:hover{border-color:#F3CFCF;background:#FBEAEA;transform:none;}
+
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:10px;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .dot.free{background:#fff;border:1px solid var(--border);}
+  .dot.busy{background:#FBEAEA;border:1px solid #F3CFCF;}
+  .dot.sel{background:var(--face-navy);}
+
+  #bookBtn{margin-top:6px;width:auto;padding:11px 26px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--border);}
+  td{padding:10px 10px;border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;}
+  .badge.ipc{background:var(--face-navy);}
+  .badge.nasdaq{background:var(--face-light);color:var(--face-dark);}
+  .cancel-link{color:var(--red);font-size:12.5px;cursor:pointer;font-weight:600;}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0;}
+
+  #toast{
+    position:fixed;bottom:24px;right:24px;background:var(--face-dark);color:#fff;padding:12px 18px;
+    border-radius:10px;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.18);display:none;z-index:100;max-width:320px;
+  }
+  #toast.error{background:var(--red);}
+  #toast.show{display:block;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:-2px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo-plate"><img src="assets/face-logo-color.png" alt="FACE Financial Advisors"></div>
+    <div class="title">Salas de Juntas<span>FACE Financial Advisors · CDMX</span></div>
+  </div>
+  <div id="userBox">
+    <button class="btn-reservar-header" id="reservarHeaderBtn" onclick="goReservar()">Reservar sala</button>
+    <div id="loggedAs" style="display:none;">Hola, <span class="name" id="userNameLabel"></span></div>
+    <button id="logoutBtn" style="display:none;" onclick="logout()">Salir</button>
+  </div>
+</header>
+
+<div id="localModeBanner" style="display:none;background:#FFF6E0;color:#8A6116;border-bottom:1px solid #F2DBA0;text-align:center;font-size:13px;padding:8px 16px;">
+  ⚠️ Modo de prueba local: las reservas solo se guardan en este navegador. Configura Google Sheets (API_URL) para que todos los asesores vean lo mismo.
+</div>
+
+<!-- LOGIN MODAL -->
+<div id="loginModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,24,50,.45);z-index:200;align-items:center;justify-content:center;">
+  <div class="login-card" style="position:relative;">
+    <button onclick="closeLoginModal()" style="position:absolute;top:14px;right:14px;border:none;background:none;font-size:18px;color:var(--muted);cursor:pointer;">✕</button>
+    <img src="assets/face-icon.png" alt="">
+    <h1>¿Quién eres?</h1>
+    <p>Selecciona tu nombre para identificarte y reservar una sala.</p>
+    <select id="advisorSelect">
+      <option value="">— Selecciona tu nombre —</option>
+    </select>
+    <button class="btn-primary" id="loginBtn" disabled onclick="login()">Continuar</button>
+  </div>
+</div>
+
+<!-- BOOKING MODAL (ver / editar / eliminar una reserva del calendario) -->
+<div id="bookingModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,24,50,.45);z-index:200;align-items:center;justify-content:center;">
+  <div class="login-card" style="position:relative;text-align:left;max-width:380px;">
+    <button onclick="closeBookingModal()" style="position:absolute;top:14px;right:14px;border:none;background:none;font-size:18px;color:var(--muted);cursor:pointer;">✕</button>
+    <h1 style="text-align:left;">Detalle de la reserva</h1>
+    <div id="bookingModalBody" style="font-size:13.5px;color:var(--ink);"></div>
+  </div>
+</div>
+
+<main>
+
+  <!-- APP -->
+  <div id="appScreen">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="calendario" onclick="switchTab('calendario')">Calendario</button>
+      <button class="tab-btn" data-tab="reservar" onclick="switchTab('reservar')">Reservar sala</button>
+      <button class="tab-btn" data-tab="ver" onclick="switchTab('ver')">Lista de reservas</button>
+    </div>
+
+    <!-- TAB CALENDARIO (vista por defecto, sin login) -->
+    <div class="tab-content active" id="tab-calendario">
+      <div class="panel">
+        <div class="week-nav">
+          <div class="week-range" id="weekRangeLabel"></div>
+          <div class="week-controls">
+            <button class="week-today-btn" onclick="goToday()">Hoy</button>
+            <button class="week-arrow" onclick="shiftWeek(-7)">‹</button>
+            <button class="week-arrow" onclick="shiftWeek(7)">›</button>
+          </div>
+        </div>
+
+        <div class="cal-room-label"><span class="cal-room-dot" style="background:var(--face-navy);"></span>Sala IPC <span class="room-meta">· 8 personas · Proyector Samsung</span></div>
+        <div class="cal-grid-wrap"><table class="cal-grid" id="cal-grid-IPC"></table></div>
+
+        <div class="cal-room-label"><span class="cal-room-dot" style="background:var(--face-light);"></span>Sala NASDAQ <span class="room-meta">· 6 personas · Pantalla The Frame</span></div>
+        <div class="cal-grid-wrap"><table class="cal-grid" id="cal-grid-NASDAQ"></table></div>
+
+        <p style="font-size:12.5px;color:var(--muted);margin-top:14px;">Da click en un horario libre, o en "Reservar sala" arriba, para hacer una reservación.</p>
+      </div>
+    </div>
+
+    <!-- TAB RESERVAR -->
+    <div class="tab-content" id="tab-reservar">
+      <div class="panel">
+        <h2>1. Elige sala, fecha, duración y horario</h2>
+        <div class="grid3">
+          <div class="field">
+            <label>Sala</label>
+            <select id="roomSelectReservar">
+              <option value="IPC">Sala IPC · 8 personas · Proyector Samsung</option>
+              <option value="NASDAQ">Sala NASDAQ · 6 personas · Pantalla The Frame</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fecha</label>
+            <input type="date" id="dateInput">
+          </div>
+          <div class="field">
+            <label>Duración</label>
+            <select id="durationSelect">
+              <option value="1">1 hora</option>
+              <option value="2">2 horas</option>
+              <option value="3">3 horas</option>
+              <option value="4">4 horas</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Horario disponible</label>
+        <div class="slot-grid" id="slotsReservar"></div>
+
+        <div class="legend">
+          <span><i class="dot free"></i>Disponible</span>
+          <span><i class="dot sel"></i>Seleccionado</span>
+          <span><i class="dot busy"></i>Ocupado</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>2. Confirma tu reserva</h2>
+        <p style="font-size:13px;color:var(--muted);margin-top:-8px;" id="selectionSummary">Selecciona un horario arriba.</p>
+        <button class="btn-primary" id="bookBtn" disabled onclick="confirmBooking()">Reservar</button>
+      </div>
+    </div>
+
+    <!-- TAB VER -->
+    <div class="tab-content" id="tab-ver">
+      <div class="panel">
+        <h2>Histórico de reservas</h2>
+        <div class="grid3">
+          <div class="field">
+            <label>Desde</label>
+            <input type="date" id="dateFromVer">
+          </div>
+          <div class="field">
+            <label>Hasta</label>
+            <input type="date" id="dateToVer">
+          </div>
+          <div class="field">
+            <label>Sala</label>
+            <select id="roomFilterVer">
+              <option value="">Todas las salas</option>
+              <option value="IPC">Sala IPC</option>
+              <option value="NASDAQ">Sala NASDAQ</option>
+            </select>
+          </div>
+        </div>
+        <button class="week-today-btn" style="margin-bottom:14px;" onclick="clearVerFilters()">Limpiar filtros</button>
+        <table>
+          <thead><tr><th>Fecha</th><th>Sala</th><th>Horario</th><th>Asesor</th><th></th></tr></thead>
+          <tbody id="bookingsTableBody"></tbody>
+        </table>
+        <div class="empty" id="bookingsEmpty" style="display:none;">No hay reservas con esos filtros.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+/* ====== CONFIGURACIÓN ====== */
+// Pega aquí la URL de tu Web App de Google Apps Script (ver instrucciones en AppsScript_code.gs).
+const API_URL = "https://script.google.com/macros/s/AKfycbw0adJSH0Olzt_sBbv7TNTZTWPbgK0-ekcWkmxueqKogqDKUfdoTVjjgVdAO_LhtsNJhg/exec";
+
+// Mientras no se configure API_URL, el sitio funciona en modo de prueba local
+// (guarda las reservas en este navegador con localStorage) para poder probar el flujo completo.
+const LOCAL_MODE = API_URL.indexOf("PEGA_AQUI") !== -1;
+const LOCAL_KEY = "face_bookings_local";
+
+// Acceso seguro a localStorage: algunos navegadores (Safari, vistas en sandbox)
+// bloquean localStorage para archivos abiertos con file:// y lanzan SecurityError.
+function safeGet(key){
+  try{ return localStorage.getItem(key); }catch(e){ return null; }
+}
+function safeSet(key, value){
+  try{ localStorage.setItem(key, value); return true; }catch(e){ return false; }
+}
+function safeRemove(key){
+  try{ localStorage.removeItem(key); }catch(e){}
+}
+
+function localGetAll(){
+  try{ return JSON.parse(safeGet(LOCAL_KEY)) || []; }catch(e){ return []; }
+}
+function localSaveAll(list){
+  return safeSet(LOCAL_KEY, JSON.stringify(list));
+}
+function rangesOverlap(aStart, aEnd, bStart, bEnd){
+  return aStart < bEnd && bStart < aEnd;
+}
+
+const ADVISORS = [
+"Jorge García Granados","Maria de Lourdes Koloffon Lara","Paula Yolanda Diaz Herrera",
+"Maria de Lourdes Pastor Farril","Jorge Roberto Rivera Medrano","Maria Rosalia Jimenez Ortega",
+"Alberto Cortes Bolio","Sofia Mejorada Perez Verdia","Andres Hoyos Morales",
+"Jonathan Alexis Bojorquez Ruelas","Marco Antonio Olivas Betancourt","Arturo Rodríguez Muraira",
+"Eduardo Giralt Dominguez","Erick Omar Villegas Jiménez","Alejandro Sánchez Barbara",
+"Alberto Baigts Cadeño","Mauricio Garza Castro","Mario Alejandro Gongora Rivera",
+"Pablo Noriega Bello","Moises Arres Muñiz","Ferdinando Santiago Hoyos",
+"Ramón Alejandro González Vega","Alejandro Tapia Castillo","Alejandro Argüelles Gonzalez",
+"Maria del Rocio Alonso Martinez","Lawrence Eden Anaya","Elisa Islas Diaz de León",
+"Luis Guillermo Garcia Dueñas Cobarruvias","Maria Clara Cuenca De La Concha","Germán González Cantón",
+"Hector Joaquin Lopez Osorio","Jose Pablo Flores Rabasa","Carlos Alberto Duarte Morales",
+"Juan Carlos Zacarias","Alejandro Martinez Romero","Laura Quintero","Jose Abraham Grafias",
+"Amairani Pamela Merino Rios","Juan Carlos Alonso","Julian Cardona"
+].sort((a,b)=>a.localeCompare(b,'es'));
+
+const ROOMS = [
+  {id:"IPC", label:"Sala IPC", cap:8, equip:"Proyector Samsung"},
+  {id:"NASDAQ", label:"Sala NASDAQ", cap:6, equip:"Pantalla The Frame"}
+];
+
+// Estos asesores pueden cancelar la reserva de cualquier persona, no solo las propias.
+const ADMINS = ["Ferdinando Santiago Hoyos", "Pablo Noriega Bello", "Germán González Cantón"];
+function isAdmin(name){ return ADMINS.includes(name); }
+
+// Horario de operación: las 24 horas del día, slots de 1 hora (00:00 a 23:00).
+const START_HOUR = 0, END_HOUR = 24;
+
+let currentUser = null;
+let selection = {room:null, time:null, duration:null};
+let bookingsCache = [];
+let weekBookingsCache = [];
+let pendingTabAfterLogin = null;
+let weekAnchor = new Date(); // ancla para la vista de calendario semanal
+
+/* ====== INIT ====== */
+function todayStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function toDateStr(d){
+  return d.toISOString().slice(0,10);
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  const sel = document.getElementById('advisorSelect');
+  ADVISORS.forEach(name=>{
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', ()=>{
+    document.getElementById('loginBtn').disabled = !sel.value;
+  });
+
+  if(LOCAL_MODE){
+    document.getElementById('localModeBanner').style.display='block';
+  }
+
+  const saved = safeGet('face_advisor');
+  if(saved){
+    currentUser = saved;
+    setLoggedInHeader();
+  }
+
+  document.getElementById('dateInput').value = todayStr();
+  document.getElementById('dateInput').addEventListener('change', loadSlots);
+  document.getElementById('roomSelectReservar').addEventListener('change', loadSlots);
+  document.getElementById('durationSelect').addEventListener('change', loadSlots);
+
+  document.getElementById('dateFromVer').addEventListener('change', loadTable);
+  document.getElementById('dateToVer').addEventListener('change', loadTable);
+  document.getElementById('roomFilterVer').addEventListener('change', loadTable);
+
+  loadCalendar();
+});
+
+function setLoggedInHeader(){
+  document.getElementById('reservarHeaderBtn').textContent = 'Reservar sala';
+  document.getElementById('loggedAs').style.display = 'block';
+  document.getElementById('logoutBtn').style.display = 'inline-block';
+  document.getElementById('userNameLabel').textContent = currentUser;
+}
+
+function goReservar(){
+  if(!currentUser){
+    pendingTabAfterLogin = 'reservar';
+    openLoginModal();
+    return;
+  }
+  switchTab('reservar');
+}
+
+function openLoginModal(){
+  document.getElementById('loginModalOverlay').style.display = 'flex';
+}
+function closeLoginModal(){
+  document.getElementById('loginModalOverlay').style.display = 'none';
+  pendingTabAfterLogin = null;
+}
+
+function login(){
+  const sel = document.getElementById('advisorSelect');
+  if(!sel.value) return;
+  currentUser = sel.value;
+  safeSet('face_advisor', currentUser);
+  setLoggedInHeader();
+  document.getElementById('loginModalOverlay').style.display = 'none';
+  if(pendingTabAfterLogin){
+    switchTab(pendingTabAfterLogin);
+    pendingTabAfterLogin = null;
+  }
+}
+function logout(){
+  safeRemove('face_advisor');
+  currentUser = null;
+  document.getElementById('reservarHeaderBtn').textContent = 'Reservar sala';
+  document.getElementById('loggedAs').style.display = 'none';
+  document.getElementById('logoutBtn').style.display = 'none';
+  switchTab('calendario');
+}
+
+function switchTab(tab){
+  if((tab==='reservar') && !currentUser){
+    pendingTabAfterLogin = 'reservar';
+    openLoginModal();
+    return;
+  }
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='ver') loadTable();
+  if(tab==='reservar') loadSlots();
+  if(tab==='calendario') loadCalendar();
+}
+
+/* ====== CALENDARIO SEMANAL (vista pública, sin login) - grilla hora x día ====== */
+const DOW = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MONTHS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+function startOfWeek(d){
+  const date = new Date(d);
+  const day = date.getDay(); // 0=Dom
+  const diff = day === 0 ? -6 : 1 - day; // semana inicia en Lunes
+  date.setDate(date.getDate() + diff);
+  return date;
+}
+
+function goToday(){
+  weekAnchor = new Date();
+  loadCalendar();
+}
+
+function shiftWeek(days){
+  weekAnchor.setDate(weekAnchor.getDate()+days);
+  loadCalendar();
+}
+
+function shortName(advisor){
+  const parts = advisor.trim().split(/\s+/);
+  if(parts.length===1) return parts[0];
+  return parts[0] + ' ' + parts[1].charAt(0) + '.';
+}
+
+async function loadCalendar(){
+  const start = startOfWeek(weekAnchor);
+  const days = [];
+  for(let i=0;i<7;i++){
+    const d = new Date(start);
+    d.setDate(start.getDate()+i);
+    days.push(d);
+  }
+
+  const endLabel = new Date(start); endLabel.setDate(start.getDate()+6);
+  document.getElementById('weekRangeLabel').textContent =
+    `${start.getDate()} – ${endLabel.getDate()} ${MONTHS[endLabel.getMonth()]} ${endLabel.getFullYear()}`;
+
+  let weekBookings = [];
+  try{
+    const results = await Promise.all(days.map(d=>apiGet(toDateStr(d))));
+    weekBookings = results.flat();
+  }catch(e){
+    showToast('No se pudo cargar el calendario.', true);
+  }
+  weekBookingsCache = weekBookings;
+
+  ROOMS.forEach(r=>renderCalGrid(r.id, days, weekBookings));
+}
+
+function buildRoomMatrix(roomId, days, weekBookings){
+  const totalHours = END_HOUR - START_HOUR;
+  const matrix = [];
+  for(let hi=0; hi<totalHours; hi++) matrix.push(new Array(days.length).fill(null));
+
+  days.forEach((d, di)=>{
+    const dStr = toDateStr(d);
+    weekBookings
+      .filter(b=>b.room===roomId && b.date===dStr)
+      .forEach(b=>{
+        const startH = parseInt(b.time.split(':')[0],10);
+        const span = Math.max(1, b.duration||1);
+        const startIdx = startH - START_HOUR;
+        if(startIdx<0 || startIdx>=totalHours) return;
+        const clippedSpan = Math.min(span, totalHours-startIdx);
+        matrix[startIdx][di] = {booking:b, span:clippedSpan};
+        for(let k=1;k<clippedSpan;k++){
+          matrix[startIdx+k][di] = 'covered';
+        }
+      });
+  });
+  return matrix;
+}
+
+function renderCalGrid(roomId, days, weekBookings){
+  const table = document.getElementById('cal-grid-'+roomId);
+  const todayS = todayStr();
+  const matrix = buildRoomMatrix(roomId, days, weekBookings);
+  const cls = roomId==='NASDAQ' ? ' room-nasdaq' : '';
+
+  let html = '<thead><tr><th></th>';
+  days.forEach(d=>{
+    const dStr = toDateStr(d);
+    html += `<th class="${dStr===todayS?'is-today':''}"><span class="wd">${DOW[d.getDay()]}</span><span class="dd">${d.getDate()}</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  for(let h=START_HOUR; h<END_HOUR; h++){
+    const hi = h - START_HOUR;
+    const time = hourLabel(h);
+    html += `<tr><td class="hour-col">${time}</td>`;
+    days.forEach((d, di)=>{
+      const cell = matrix[hi][di];
+      if(cell === 'covered') return; // ya cubierto por el rowspan de la hora de inicio
+      if(cell && cell.booking){
+        const b = cell.booking;
+        const startH = parseInt(b.time.split(':')[0],10);
+        const endLabel = hourLabel(Math.min(startH + (b.duration||1), END_HOUR));
+        html += `<td rowspan="${cell.span}"><div class="cal-booking${cls}" onclick="openBookingModal('${b.id}')" title="${b.advisor} · ${b.time}-${endLabel}">${shortName(b.advisor)}</div></td>`;
+      } else {
+        const dStr = toDateStr(d);
+        html += `<td><div class="cal-cell-free" onclick="calCellClick('${roomId}','${dStr}','${time}')"></div></td>`;
+      }
+    });
+    html += '</tr>';
+  }
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+function calCellClick(roomId, dateStr, time){
+  document.getElementById('dateInput').value = dateStr;
+  document.getElementById('roomSelectReservar').value = roomId;
+  goReservar();
+  setTimeout(()=>{
+    const duration = parseInt(document.getElementById('durationSelect').value, 10);
+    loadSlots().then(()=> selectSlot(roomId, time, duration));
+  }, 50);
+}
+
+/* ====== MODAL DE DETALLE / EDITAR / ELIMINAR RESERVA ====== */
+function findBookingById(id){
+  return weekBookingsCache.find(b=>b.id===id) || bookingsCache.find(b=>b.id===id) || (window.__verBookingsCache||[]).find(b=>b.id===id);
+}
+
+function openBookingModal(id){
+  const b = findBookingById(id);
+  if(!b){ showToast('No se encontró la reserva.', true); return; }
+
+  const room = ROOMS.find(r=>r.id===b.room);
+  const startH = parseInt(b.time.split(':')[0],10);
+  const endLabel = hourLabel(Math.min(startH + (b.duration||1), END_HOUR));
+  const canManage = currentUser && (currentUser===b.advisor || isAdmin(currentUser));
+
+  let durationOptions = '';
+  for(let d=1; d<=4; d++){
+    durationOptions += `<option value="${d}" ${d===(b.duration||1)?'selected':''}>${d} hora${d>1?'s':''}</option>`;
+  }
+
+  let html = `
+    <p style="margin:0 0 6px;"><strong>${room ? room.label : b.room}</strong></p>
+    <p style="margin:0 0 6px;color:var(--muted);">${formatDate(b.date)} · ${b.time} – ${endLabel} hrs</p>
+    <p style="margin:0 0 18px;">Reservado por <strong>${b.advisor}</strong></p>
+  `;
+
+  if(canManage){
+    html += `
+      <div class="field">
+        <label>Cambiar duración</label>
+        <select id="modalDurationSelect">${durationOptions}</select>
+      </div>
+      <button class="btn-primary" style="margin-bottom:10px;" onclick="saveBookingDuration('${b.id}')">Guardar cambios</button>
+      <button class="btn-primary" style="background:#D64545;box-shadow:none;" onclick="deleteBookingFromModal('${b.id}','${b.advisor}')">Eliminar reserva</button>
+    `;
+  } else if(!currentUser){
+    html += `<p style="font-size:12.5px;color:var(--muted);">Inicia sesión identificándote para poder editar o eliminar esta reserva (solo si es tuya, o eres administrador).</p>`;
+  } else {
+    html += `<p style="font-size:12.5px;color:var(--muted);">Solo ${b.advisor} o un administrador pueden modificar esta reserva.</p>`;
+  }
+
+  document.getElementById('bookingModalBody').innerHTML = html;
+  document.getElementById('bookingModalOverlay').style.display = 'flex';
+}
+
+function closeBookingModal(){
+  document.getElementById('bookingModalOverlay').style.display = 'none';
+}
+
+async function saveBookingDuration(id){
+  const newDuration = parseInt(document.getElementById('modalDurationSelect').value, 10);
+  try{
+    const res = await apiPost({action:'edit', id, duration:newDuration, advisor:currentUser});
+    if(res.ok){
+      showToast('Duración actualizada ✓');
+      closeBookingModal();
+      loadCalendar();
+      loadTable();
+      loadSlots();
+    } else {
+      showToast(res.message || 'No se pudo actualizar.', true);
+    }
+  }catch(e){
+    showToast('Error de conexión al editar.', true);
+  }
+}
+
+async function deleteBookingFromModal(id, ownerName){
+  closeBookingModal();
+  await cancelBooking(id, ownerName);
+}
+
+/* ====== API ====== */
+async function apiGet(date){
+  if(LOCAL_MODE){
+    return localGetAll().filter(b=>b.date===date);
+  }
+  const res = await fetch(`${API_URL}?date=${date}`);
+  if(!res.ok) throw new Error('Error de conexión');
+  return res.json();
+}
+async function apiGetAll(){
+  if(LOCAL_MODE){
+    return localGetAll();
+  }
+  const res = await fetch(API_URL);
+  if(!res.ok) throw new Error('Error de conexión');
+  return res.json();
+}
+async function apiPost(payload){
+  if(LOCAL_MODE){
+    return localApiPost(payload);
+  }
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+function localApiPost(payload){
+  const list = localGetAll();
+  if(payload.action === 'create'){
+    const newStart = parseInt(payload.time.split(':')[0],10);
+    const newDur = Math.max(1, parseInt(payload.duration||1,10));
+    const conflict = list.some(b=>{
+      if(b.room!==payload.room || b.date!==payload.date) return false;
+      const s = parseInt(b.time.split(':')[0],10);
+      const sp = Math.max(1, b.duration||1);
+      return rangesOverlap(newStart, newStart+newDur, s, s+sp);
+    });
+    if(conflict){
+      return {ok:false, message:"Ese horario se cruza con otra reserva ya existente."};
+    }
+    const id = 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+    list.push({id, room:payload.room, date:payload.date, time:payload.time, duration:newDur, advisor:payload.advisor});
+    const saved = localSaveAll(list);
+    if(!saved){
+      return {ok:false, message:"Tu navegador bloqueó el guardado local (localStorage). Abre el sitio desde un servidor local (no con doble click al archivo) o conecta Google Sheets."};
+    }
+    return {ok:true, id};
+  }
+  if(payload.action === 'edit'){
+    const idx = list.findIndex(b=>b.id===payload.id);
+    if(idx===-1) return {ok:false, message:"No se encontró la reserva."};
+    if(list[idx].advisor !== payload.advisor && !isAdmin(payload.advisor)) return {ok:false, message:"Solo puedes editar tus propias reservas."};
+    const newDur = Math.max(1, parseInt(payload.duration||1,10));
+    const s = parseInt(list[idx].time.split(':')[0],10);
+    const conflict = list.some((b,i)=>{
+      if(i===idx || b.room!==list[idx].room || b.date!==list[idx].date) return false;
+      const bs = parseInt(b.time.split(':')[0],10);
+      const bsp = Math.max(1, b.duration||1);
+      return rangesOverlap(s, s+newDur, bs, bs+bsp);
+    });
+    if(conflict) return {ok:false, message:"La nueva duración se cruza con otra reserva."};
+    list[idx].duration = newDur;
+    const saved = localSaveAll(list);
+    if(!saved) return {ok:false, message:"Tu navegador bloqueó el guardado local (localStorage)."};
+    return {ok:true};
+  }
+  if(payload.action === 'cancel'){
+    const idx = list.findIndex(b=>b.id===payload.id);
+    if(idx===-1) return {ok:false, message:"No se encontró la reserva."};
+    const isOwner = list[idx].advisor === payload.advisor;
+    if(!isOwner && !isAdmin(payload.advisor)) return {ok:false, message:"Solo puedes cancelar tus propias reservas."};
+    list.splice(idx,1);
+    localSaveAll(list);
+    return {ok:true};
+  }
+  return {ok:false, message:"Acción no reconocida."};
+}
+
+function showToast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError? ' error':'');
+  setTimeout(()=>{ t.className=''; }, 3500);
+}
+
+/* ====== SLOTS / RESERVAR ====== */
+function hourLabel(h){
+  return `${String(h).padStart(2,'0')}:00`;
+}
+
+async function loadSlots(){
+  const date = document.getElementById('dateInput').value;
+  const roomId = document.getElementById('roomSelectReservar').value;
+  if(!date) return;
+  if(!selection.room || selection.room!==roomId) selection = {room:null, time:null, duration:null};
+  updateSummary();
+  try{
+    bookingsCache = await apiGet(date);
+  }catch(e){
+    showToast('No se pudo cargar disponibilidad. Revisa la conexión con Google Sheets.', true);
+    bookingsCache = [];
+  }
+  renderSlots(roomId, date);
+}
+
+function renderSlots(roomId, date){
+  const container = document.getElementById('slotsReservar');
+  container.innerHTML = '';
+  const duration = parseInt(document.getElementById('durationSelect').value, 10);
+  const taken = bookingsCache.filter(b=>b.room===roomId && b.date===date);
+
+  for(let h=START_HOUR; h<END_HOUR; h++){
+    const time = hourLabel(h);
+    const occupant = taken.find(b=>{
+      const s = parseInt(b.time.split(':')[0],10);
+      const sp = Math.max(1, b.duration||1);
+      return h>=s && h<s+sp;
+    });
+    const div = document.createElement('div');
+    div.className = 'slot';
+
+    if(occupant){
+      div.classList.add('taken');
+      div.innerHTML = `${time}<br><span style="font-size:10px;font-weight:500;">${shortName(occupant.advisor)}</span>`;
+      div.title = `Ocupado por ${occupant.advisor}`;
+    } else {
+      const fits = (h + duration <= END_HOUR) && !taken.some(b=>{
+        const s = parseInt(b.time.split(':')[0],10);
+        const sp = Math.max(1, b.duration||1);
+        return rangesOverlap(h, h+duration, s, s+sp);
+      });
+      div.textContent = time;
+      if(fits){
+        div.onclick = ()=>selectSlot(roomId, time, duration);
+      } else {
+        div.classList.add('taken');
+        div.title = `No cabe una reserva de ${duration} hora(s) a partir de esta hora.`;
+      }
+      if(selection.room===roomId && selection.time===time && selection.duration===duration && fits){
+        div.classList.add('selected');
+      }
+    }
+    container.appendChild(div);
+  }
+}
+
+function selectSlot(roomId, time, duration){
+  selection = {room: roomId, time: time, duration: duration};
+  const date = document.getElementById('dateInput').value;
+  renderSlots(roomId, date);
+  updateSummary();
+}
+
+function updateSummary(){
+  const summary = document.getElementById('selectionSummary');
+  const btn = document.getElementById('bookBtn');
+  if(selection.room && selection.time && selection.duration){
+    const room = ROOMS.find(r=>r.id===selection.room);
+    const date = document.getElementById('dateInput').value;
+    const startH = parseInt(selection.time.split(':')[0],10);
+    const endLabel = hourLabel(Math.min(startH+selection.duration, END_HOUR));
+    summary.textContent = `${room.label} · ${formatDate(date)} · de ${selection.time} a ${endLabel} hrs (${selection.duration}h) · Reserva a nombre de ${currentUser}.`;
+    btn.disabled = false;
+  } else {
+    summary.textContent = 'Selecciona un horario arriba.';
+    btn.disabled = true;
+  }
+}
+
+function formatDate(d){
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+async function confirmBooking(){
+  if(!selection.room || !selection.time || !selection.duration) return;
+  const date = document.getElementById('dateInput').value;
+  const btn = document.getElementById('bookBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Reservando...';
+  try{
+    const res = await apiPost({
+      action:'create',
+      room: selection.room,
+      date: date,
+      time: selection.time,
+      duration: selection.duration,
+      advisor: currentUser
+    });
+    if(res.ok){
+      showToast('Reserva confirmada ✓');
+      selection = {room:null, time:null, duration:null};
+      await loadSlots();
+    } else {
+      showToast(res.message || 'Ese horario ya fue tomado, elige otro.', true);
+      await loadSlots();
+    }
+  }catch(e){
+    showToast('Error de conexión al reservar.', true);
+  }finally{
+    btn.innerHTML = 'Reservar';
+    updateSummary();
+  }
+}
+
+/* ====== HISTÓRICO DE RESERVAS ====== */
+function clearVerFilters(){
+  document.getElementById('dateFromVer').value = '';
+  document.getElementById('dateToVer').value = '';
+  document.getElementById('roomFilterVer').value = '';
+  loadTable();
+}
+
+async function loadTable(){
+  const from = document.getElementById('dateFromVer').value;
+  const to = document.getElementById('dateToVer').value;
+  const roomFilter = document.getElementById('roomFilterVer').value;
+  const tbody = document.getElementById('bookingsTableBody');
+  const empty = document.getElementById('bookingsEmpty');
+  tbody.innerHTML = '';
+
+  let list = [];
+  try{
+    list = await apiGetAll();
+  }catch(e){
+    showToast('No se pudo cargar el histórico de reservas.', true);
+  }
+
+  if(from) list = list.filter(b=>b.date >= from);
+  if(to) list = list.filter(b=>b.date <= to);
+  if(roomFilter) list = list.filter(b=>b.room === roomFilter);
+
+  window.__verBookingsCache = list;
+
+  // más reciente primero
+  list.sort((a,b)=> b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
+
+  if(list.length===0){
+    empty.style.display='block';
+  } else {
+    empty.style.display='none';
+    list.forEach(b=>{
+      const tr = document.createElement('tr');
+      const badgeClass = b.room==='IPC' ? 'ipc' : 'nasdaq';
+      const roomLabel = ROOMS.find(r=>r.id===b.room)?.label || b.room;
+      const startH = parseInt(b.time.split(':')[0],10);
+      const endLabel = hourLabel(Math.min(startH + (b.duration||1), END_HOUR));
+      const canCancel = currentUser && (b.advisor===currentUser || isAdmin(currentUser));
+      const cancelLabel = (currentUser && isAdmin(currentUser) && b.advisor!==currentUser) ? 'Eliminar (admin)' : 'Cancelar';
+      tr.innerHTML = `
+        <td>${formatDate(b.date)}</td>
+        <td><span class="badge ${badgeClass}">${roomLabel}</span></td>
+        <td>${b.time} – ${endLabel} hrs (${b.duration||1}h)</td>
+        <td>${b.advisor}</td>
+        <td>${canCancel ? `<span class="cancel-link" onclick="cancelBooking('${b.id}','${b.advisor}')">${cancelLabel}</span>` : ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+}
+
+async function cancelBooking(id, ownerName){
+  if(!currentUser){
+    pendingTabAfterLogin = 'ver';
+    openLoginModal();
+    return;
+  }
+  const msg = (ownerName && ownerName!==currentUser)
+    ? `Vas a eliminar la reserva de ${ownerName} como administrador (${currentUser}). ¿Confirmas?`
+    : '¿Cancelar esta reserva?';
+  if(!confirm(msg)) return;
+  try{
+    const res = await apiPost({action:'cancel', id: id, advisor: currentUser});
+    if(res.ok){
+      showToast('Reserva cancelada.');
+      loadTable();
+      loadSlots();
+      loadCalendar();
+    } else {
+      showToast(res.message || 'No se pudo cancelar.', true);
+    }
+  }catch(e){
+    showToast('Error de conexión al cancelar.', true);
+  }
+}
+</script>
+</body>
+</html>
