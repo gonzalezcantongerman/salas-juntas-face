@@ -478,20 +478,37 @@ function getWeeklyUsed(advisor, dateStr){
   }, 0);
 }
 
-/** Devuelve true si el asesor (no admin) puede cancelar esta reserva
- *  (es suya Y faltan más de 2h para que comience). */
+/** Devuelve true si la reserva ya comenzó (o ya pasó). */
+function isBookingPast(booking){
+  const [y,m,day] = booking.date.split('-').map(Number);
+  const h = parseInt(booking.time.split(':')[0], 10);
+  return new Date(y, m-1, day, h, 0, 0) < new Date();
+}
+
+/** Devuelve true si el usuario puede cancelar esta reserva
+ *  (es suya o admin, la reserva es futura, y faltan más de 2h). */
 function canCancelBooking(booking, user){
   if(!user) return false;
+  if(isBookingPast(booking)) return false; // pasada: nadie puede cancelar
   const admin = isAdmin(user);
   const owner = booking.advisor===user;
   if(!owner && !admin) return false;
-  if(admin) return true;
-  // Ventana de 2 horas
+  if(admin) return true; // admin puede cancelar futuras sin límite de 2h
+  // No-admin: debe faltar más de 2h
   const [y,m,day] = booking.date.split('-').map(Number);
   const h = parseInt(booking.time.split(':')[0], 10);
-  const bookingTime = new Date(y, m-1, day, h, 0, 0);
-  const diffMs = bookingTime - new Date();
+  const diffMs = new Date(y, m-1, day, h, 0, 0) - new Date();
   return diffMs >= 2*60*60*1000;
+}
+
+/** Devuelve true si el usuario puede editar la duración de esta reserva
+ *  (es suya o admin, y la reserva aún no ha comenzado). */
+function canEditBooking(booking, user){
+  if(!user) return false;
+  if(isBookingPast(booking)) return false; // pasada: nadie puede editar
+  const admin = isAdmin(user);
+  const owner = booking.advisor===user;
+  return owner || admin;
 }
 
 function updateWeeklyUsageBar(date){
@@ -807,8 +824,9 @@ function openBookingModal(id){
   const room = ROOMS.find(r=>r.id===b.room);
   const startH = parseInt(b.time.split(':')[0],10);
   const endLabel = hourLabel(Math.min(startH + (b.duration||1), END_HOUR));
-  const canManage = currentUser && (currentUser===b.advisor || isAdmin(currentUser));
-  const canDel = canCancelBooking(b, currentUser);
+  const canManage = canEditBooking(b, currentUser);
+  const canDel    = canCancelBooking(b, currentUser);
+  const past      = isBookingPast(b);
 
   let durationOptions = '';
   for(let d=1; d<=4; d++){
@@ -821,7 +839,9 @@ function openBookingModal(id){
     <p style="margin:0 0 18px;">Reservado por <strong>${b.advisor}</strong></p>
   `;
 
-  if(canManage){
+  if(past){
+    html += `<p style="font-size:12.5px;color:var(--muted);margin-top:4px;">🔒 Esta reserva ya ocurrió y no puede modificarse.</p>`;
+  } else if(canManage){
     html += `
       <div class="field">
         <label>Cambiar duración</label>
@@ -835,7 +855,7 @@ function openBookingModal(id){
       html += `<p style="font-size:12px;color:var(--muted);margin-top:8px;">🔒 No se puede cancelar con menos de 2 horas de anticipación.</p>`;
     }
   } else if(!currentUser){
-    html += `<p style="font-size:12.5px;color:var(--muted);">Inicia sesión identificándote para poder editar o eliminar esta reserva (solo si es tuya, o eres administrador).</p>`;
+    html += `<p style="font-size:12.5px;color:var(--muted);">Inicia sesión para poder editar o eliminar esta reserva (solo si es tuya, o eres administrador).</p>`;
   } else {
     html += `<p style="font-size:12.5px;color:var(--muted);">Solo ${b.advisor} o un administrador pueden modificar esta reserva.</p>`;
   }
@@ -1128,8 +1148,8 @@ async function loadTable(){
       const canCancel = canCancelBooking(b, currentUser);
       const isOwnerOrAdmin = currentUser && (b.advisor===currentUser || isAdmin(currentUser));
       const cancelLabel = (currentUser && isAdmin(currentUser) && b.advisor!==currentUser) ? 'Eliminar (admin)' : 'Cancelar';
-      // Mostrar "bloqueado" si es suya pero ya no puede cancelar por ventana de 2h
-      const within2h = isOwnerOrAdmin && !canCancel;
+      const bPast = isBookingPast(b);
+      const within2h = !bPast && isOwnerOrAdmin && !canCancel;
       tr.innerHTML = `
         <td>${formatDate(b.date)}</td>
         <td><span class="badge ${badgeClass}">${roomLabel}</span></td>
@@ -1137,9 +1157,11 @@ async function loadTable(){
         <td>${b.advisor}</td>
         <td>${canCancel
           ? `<span class="cancel-link" onclick="cancelBooking('${b.id}','${b.advisor}')">${cancelLabel}</span>`
-          : within2h
-            ? `<span style="font-size:12px;color:var(--muted);" title="No puedes cancelar con menos de 2h de anticipación">🔒 &lt;2h</span>`
-            : ''}</td>
+          : bPast && isOwnerOrAdmin
+            ? `<span style="font-size:12px;color:var(--muted);" title="La reserva ya ocurrió">✓ Concluida</span>`
+            : within2h
+              ? `<span style="font-size:12px;color:var(--muted);" title="No puedes cancelar con menos de 2h de anticipación">🔒 &lt;2h</span>`
+              : ''}</td>
       `;
       tbody.appendChild(tr);
     });

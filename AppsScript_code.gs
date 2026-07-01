@@ -214,6 +214,14 @@ function handleEdit(sheet, body) {
       return jsonResponse({ ok: false, message: "Solo puedes editar tus propias reservas." });
     }
 
+    // Bloquear edición de reservas pasadas (nadie puede modificar, ni admins)
+    const bookingDate = normalizeDate(data[rowIndex][idx.date]);
+    const bookingHour = startHour(data[rowIndex][idx.time]);
+    const bookingDateTime = new Date(bookingDate + "T" + String(bookingHour).padStart(2, "0") + ":00:00");
+    if (bookingDateTime < new Date()) {
+      return jsonResponse({ ok: false, message: "No se puede editar una reserva que ya ocurrió." });
+    }
+
     const room  = data[rowIndex][idx.room];
     const date  = normalizeDate(data[rowIndex][idx.date]);
     const start = startHour(data[rowIndex][idx.time]);
