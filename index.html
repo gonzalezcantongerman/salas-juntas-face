@@ -410,30 +410,68 @@ function rangesOverlap(aStart, aEnd, bStart, bEnd){
   return aStart < bEnd && bStart < aEnd;
 }
 
-const ADVISORS = [
-"Jorge García Granados","Maria de Lourdes Koloffon Lara","Paula Yolanda Diaz Herrera",
-"Maria de Lourdes Pastor Farril","Jorge Roberto Rivera Medrano","Maria Rosalia Jimenez Ortega",
-"Alberto Cortes Bolio","Sofia Mejorada Perez Verdia","Andres Hoyos Morales",
-"Jonathan Alexis Bojorquez Ruelas","Marco Antonio Olivas Betancourt","Arturo Rodríguez Muraira",
-"Eduardo Giralt Dominguez","Erick Omar Villegas Jiménez","Alejandro Sánchez Barbara",
-"Alberto Baigts Cadeño","Mauricio Garza Castro","Mario Alejandro Gongora Rivera",
-"Pablo Noriega Bello","Moises Arres Muñiz","Ferdinando Santiago Hoyos",
-"Ramón Alejandro González Vega","Alejandro Tapia Castillo","Alejandro Argüelles Gonzalez",
-"Maria del Rocio Alonso Martinez","Lawrence Eden Anaya","Elisa Islas Diaz de León",
-"Luis Guillermo Garcia Dueñas Cobarruvias","Maria Clara Cuenca De La Concha","Germán González Cantón",
-"Hector Joaquin Lopez Osorio","Jose Pablo Flores Rabasa","Carlos Alberto Duarte Morales",
-"Juan Carlos Zacarias","Alejandro Martinez Romero","Laura Quintero","Jose Abraham Grafias",
-"Amairani Pamela Merino Rios","Juan Carlos Alonso","Julian Cardona"
-].sort((a,b)=>a.localeCompare(b,'es'));
+// Lista de asesores cargada dinámicamente desde la hoja "Asesores" del backend.
+// Se llena en initAdvisors() al arrancar la app.
+// Cada entrada: { nombre, activo, esAdmin, limiteHoras }
+let advisorsData = [];
+
+// Fallback local para LOCAL_MODE o si el fetch falla antes de cargar
+const ADVISORS_FALLBACK = [
+  "Alejandro Argüelles Gonzalez","Alejandro Martinez Romero","Alejandro Sánchez Barbara",
+  "Alejandro Tapia Castillo","Alberto Baigts Cadeño","Alberto Cortes Bolio",
+  "Amairani Pamela Merino Rios","Andres Hoyos Morales","Arturo Rodríguez Muraira",
+  "Carlos Alberto Duarte Morales","Eduardo Giralt Dominguez","Elisa Islas Diaz de León",
+  "Erick Omar Villegas Jiménez","Ferdinando Santiago Hoyos","Germán González Cantón",
+  "Hector Joaquin Lopez Osorio","Jonathan Alexis Bojorquez Ruelas","Jorge García Granados",
+  "Jorge Roberto Rivera Medrano","Jose Abraham Grafias","Jose Pablo Flores Rabasa",
+  "Juan Carlos Alonso","Juan Carlos Zacarias","Julian Cardona",
+  "Laura Quintero","Lawrence Eden Anaya","Luis Guillermo Garcia Dueñas Cobarruvias",
+  "Marco Antonio Olivas Betancourt","Maria Clara Cuenca De La Concha",
+  "Maria de Lourdes Koloffon Lara","Maria de Lourdes Pastor Farril",
+  "Maria del Rocio Alonso Martinez","Maria Rosalia Jimenez Ortega",
+  "Mario Alejandro Gongora Rivera","Mauricio Garza Castro","Moises Arres Muñiz",
+  "Pablo Noriega Bello","Paula Yolanda Diaz Herrera","Ramón Alejandro González Vega",
+  "Sofia Mejorada Perez Verdia"
+];
 
 const ROOMS = [
   {id:"IPC", label:"Sala IPC", cap:8, equip:"Proyector Samsung"},
   {id:"NASDAQ", label:"Sala NASDAQ", cap:6, equip:"Pantalla The Frame"}
 ];
 
-// Estos asesores pueden cancelar la reserva de cualquier persona, no solo las propias.
-const ADMINS = ["Ferdinando Santiago Hoyos", "Pablo Noriega Bello", "Germán González Cantón"];
-function isAdmin(name){ return ADMINS.includes(name); }
+function isAdmin(name){
+  const rec = advisorsData.find(a=>a.nombre===name);
+  return rec ? rec.esAdmin : false;
+}
+
+/** Obtiene la lista de asesores del backend y puebla el dropdown de login. */
+async function initAdvisors(){
+  let list = [];
+  if(!LOCAL_MODE){
+    try{
+      const res = await fetch(`${API_URL}?action=advisors`);
+      if(res.ok) list = await res.json();
+    }catch(e){ /* usa fallback */ }
+  }
+  if(!list || list.length === 0){
+    // fallback: construir estructura mínima desde la lista hardcodeada
+    list = ADVISORS_FALLBACK.map(n=>({nombre:n, activo:true, esAdmin:["Ferdinando Santiago Hoyos","Pablo Noriega Bello","Germán González Cantón"].includes(n), limiteHoras:999}));
+  }
+  advisorsData = list;
+
+  const sel = document.getElementById('advisorSelect');
+  // Limpiar opciones anteriores excepto el placeholder
+  while(sel.options.length > 1) sel.remove(1);
+
+  list
+    .filter(a=>a.activo)
+    .sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'))
+    .forEach(a=>{
+      const opt = document.createElement('option');
+      opt.value = a.nombre; opt.textContent = a.nombre;
+      sel.appendChild(opt);
+    });
+}
 
 // Horario de operación: las 24 horas del día, slots de 1 hora (00:00 a 23:00).
 const START_HOUR = 0, END_HOUR = 24;
@@ -454,13 +492,11 @@ function toDateStr(d){
   return d.toISOString().slice(0,10);
 }
 
-window.addEventListener('DOMContentLoaded', ()=>{
+window.addEventListener('DOMContentLoaded', async ()=>{
+  // Cargar lista de asesores desde el backend (o fallback local)
+  await initAdvisors();
+
   const sel = document.getElementById('advisorSelect');
-  ADVISORS.forEach(name=>{
-    const opt = document.createElement('option');
-    opt.value = name; opt.textContent = name;
-    sel.appendChild(opt);
-  });
   sel.addEventListener('change', ()=>{
     document.getElementById('loginBtn').disabled = !sel.value;
   });
@@ -471,8 +507,18 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
   const saved = safeGet('face_advisor');
   if(saved){
-    currentUser = saved;
-    setLoggedInHeader();
+    // Verificar que el asesor guardado siga activo en la hoja
+    const rec = advisorsData.find(a=>a.nombre===saved);
+    if(rec && rec.activo){
+      currentUser = saved;
+      setLoggedInHeader();
+    } else if(rec && !rec.activo){
+      safeRemove('face_advisor');
+      showToast('Tu acceso ha sido desactivado. Contacta a un administrador.', true);
+    } else {
+      currentUser = saved; // asesor no encontrado en el directorio (modo offline), igual se deja
+      setLoggedInHeader();
+    }
   }
 
   document.getElementById('dateInput').value = todayStr();
