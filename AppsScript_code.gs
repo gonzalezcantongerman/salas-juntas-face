@@ -81,8 +81,22 @@ function readAdvisors() {
     }));
 }
 
+/** Quita acentos y pasa a minúsculas para comparar nombres sin importar tildes. */
+function normalizeName(s) {
+  return String(s).trim().toLowerCase()
+    .replace(/[áàäâ]/g,'a').replace(/[éèëê]/g,'e')
+    .replace(/[íìïî]/g,'i').replace(/[óòöô]/g,'o')
+    .replace(/[úùüû]/g,'u').replace(/ñ/g,'n');
+}
+
+function findAdvisor(name, advisors) {
+  const n = normalizeName(name);
+  return advisors.find(a => normalizeName(a.nombre) === n) || null;
+}
+
 function isAdmin(name, advisors) {
-  return advisors.some(a => a.nombre === name && a.esAdmin);
+  const rec = findAdvisor(name, advisors);
+  return rec ? rec.esAdmin : false;
 }
 
 // ─── Endpoints ───────────────────────────────────────────────────────────────
@@ -138,7 +152,7 @@ function handleCreate(sheet, body) {
     const advisors = readAdvisors();
 
     // Verificar que el asesor exista y esté activo
-    const rec = advisors.find(a => a.nombre === advisor);
+    const rec = findAdvisor(advisor, advisors);
     if (!rec) {
       return jsonResponse({ ok: false, message: "Asesor no encontrado en el directorio. Contacta a un administrador." });
     }
@@ -167,7 +181,7 @@ function handleCreate(sheet, body) {
     const wEnd   = weekEnd(wStart);
     const usedHours = data.reduce((sum, row) => {
       const rd = normalizeDate(row[idx.date]);
-      if (row[idx.advisor] !== advisor || rd < wStart || rd > wEnd) return sum;
+      if (normalizeName(row[idx.advisor]) !== normalizeName(advisor) || rd < wStart || rd > wEnd) return sum;
       return sum + Math.max(1, Number(row[idx.duration]) || 1);
     }, 0);
 
@@ -240,14 +254,14 @@ function handleEdit(sheet, body) {
 
     // Límite semanal (excluyendo la reserva que se edita)
     const bookingAdvisor = data[rowIndex][idx.advisor];
-    const rec = advisors.find(a => a.nombre === bookingAdvisor);
+    const rec = findAdvisor(bookingAdvisor, advisors);
     if (rec) {
       const wStart = weekStart(date);
       const wEnd   = weekEnd(wStart);
       const usedHours = data.reduce((sum, row, i) => {
         if (i === 0 || i === rowIndex) return sum;
         const rd = normalizeDate(row[idx.date]);
-        if (row[idx.advisor] !== bookingAdvisor || rd < wStart || rd > wEnd) return sum;
+        if (normalizeName(row[idx.advisor]) !== normalizeName(bookingAdvisor) || rd < wStart || rd > wEnd) return sum;
         return sum + Math.max(1, Number(row[idx.duration]) || 1);
       }, 0);
       if (usedHours + newDuration > rec.limiteHoras) {

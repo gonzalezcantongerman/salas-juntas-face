@@ -447,13 +447,25 @@ const ROOMS = [
   {id:"NASDAQ", label:"Sala NASDAQ", cap:6, equip:"Pantalla The Frame"}
 ];
 
+/** Quita acentos y pasa a minúsculas para comparar nombres sin importar tildes. */
+function normalizeName(s){
+  return String(s).trim().toLowerCase()
+    .replace(/[áàäâ]/g,'a').replace(/[éèëê]/g,'e')
+    .replace(/[íìïî]/g,'i').replace(/[óòöô]/g,'o')
+    .replace(/[úùüû]/g,'u').replace(/ñ/g,'n');
+}
+function findAdvisor(name){
+  const n = normalizeName(name);
+  return advisorsData.find(a => normalizeName(a.nombre) === n) || null;
+}
+
 function isAdmin(name){
-  const rec = advisorsData.find(a=>a.nombre===name);
+  const rec = findAdvisor(name);
   return rec ? rec.esAdmin : false;
 }
 
 function getAdvisorLimit(name){
-  const rec = advisorsData.find(a=>a.nombre===name);
+  const rec = findAdvisor(name);
   return rec ? (rec.limiteHoras || 999) : 999;
 }
 
@@ -486,7 +498,7 @@ async function getWeeklyUsed(advisor, dateStr){
   const seen = new Set();
   return _weekUsageCache.data.reduce((sum, b)=>{
     if(seen.has(b.id)) return sum;
-    if(b.advisor!==advisor) return sum;
+    if(normalizeName(b.advisor)!==normalizeName(advisor)) return sum;
     seen.add(b.id);
     return sum + Math.max(1, b.duration||1);
   }, 0);
