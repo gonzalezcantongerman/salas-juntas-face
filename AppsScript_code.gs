@@ -377,8 +377,9 @@ function handleCreatePuesto(sheet, body) {
 }
 
 function handleEditPuesto(sheet, body) {
-  const {id,advisor}=body;
-  const newDuration=Math.max(1,parseInt(body.duration||1,10));
+  const {id, advisor} = body;
+  const newTime     = body.time     || null;   // nueva hora inicio (opcional)
+  const newDuration = Math.max(1, parseInt(body.duration||1, 10));
   if(!id) return jsonResponse({ok:false,message:"Falta el id."});
 
   const lock=LockService.getScriptLock(); lock.waitLock(10000);
@@ -393,18 +394,26 @@ function handleEditPuesto(sheet, body) {
     if(data[ri][idx.advisor]!==advisor&&!isAdmin(advisor,advisors))
       return jsonResponse({ok:false,message:"Solo puedes editar tus propias reservas."});
 
-    const bDate=normalizeDate(data[ri][idx.date]), bHour=startHour(data[ri][idx.time]);
-    if(new Date(bDate+"T"+String(bHour).padStart(2,"0")+":00:00")<new Date())
+    const bDate=normalizeDate(data[ri][idx.date]);
+    const bHour=startHour(data[ri][idx.time]);
+    const bDt=new Date(bDate+"T"+String(bHour).padStart(2,"0")+":00:00");
+    if(bDt<new Date())
       return jsonResponse({ok:false,message:"No se puede editar una reserva que ya ocurrió."});
+    if(!isAdmin(advisor,advisors)&&(bDt-new Date())<12*60*60*1000)
+      return jsonResponse({ok:false,message:"No puedes editar con menos de 12h de anticipación."});
 
     const puesto=data[ri][idx.puesto];
+    const newStart=newTime?startHour(newTime):bHour;
     const conflict=data.some((r,i)=>{
       if(i===ri||i===0||r[idx.puesto]!==puesto||normalizeDate(r[idx.date])!==bDate) return false;
       const s=startHour(r[idx.time]),sp=Math.max(1,Number(r[idx.duration])||1);
-      return rangesOverlap(bHour,bHour+newDuration,s,s+sp);
+      return rangesOverlap(newStart,newStart+newDuration,s,s+sp);
     });
-    if(conflict) return jsonResponse({ok:false,message:"La nueva duración se cruza con otra reserva."});
+    if(conflict) return jsonResponse({ok:false,message:"El nuevo horario se cruza con otra reserva."});
 
+    if(newTime){
+      sheet.getRange(ri+1,idx.time+1).setNumberFormat("@").setValue(newTime);
+    }
     sheet.getRange(ri+1,idx.duration+1).setValue(newDuration);
     return jsonResponse({ok:true});
   } finally { lock.releaseLock(); }
@@ -423,7 +432,7 @@ function handleCancelPuesto(sheet, body) {
       return jsonResponse({ok:false,message:"Solo puedes cancelar tus propias reservas."});
     if(!isAdmin(advisor,advisors)){
       const dt=new Date(normalizeDate(data[i][idx.date])+"T"+String(startHour(data[i][idx.time])).padStart(2,"0")+":00:00");
-      if((dt-new Date())<2*60*60*1000) return jsonResponse({ok:false,message:"No puedes cancelar con menos de 2h de anticipación."});
+      if((dt-new Date())<12*60*60*1000) return jsonResponse({ok:false,message:"No puedes cancelar con menos de 12h de anticipación."});
     }
     sheet.deleteRow(i+1);
     return jsonResponse({ok:true});
