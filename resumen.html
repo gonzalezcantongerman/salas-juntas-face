@@ -4,99 +4,136 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FACE – Resumen del día</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --navy:#3F4FA3;--light:#8B98D9;--dark:#2B3673;
-  --green:#27ae60;--red:#c0392b;--amber:#e67e22;--gray:#eceff4;
-  --font:'Segoe UI',Arial,sans-serif;
+  --green:#1A9E55;--red:#D64545;--amber:#D97706;
+  --bg:#0d1333;--card:#182060;--border:rgba(139,152,217,.2);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font);background:#0e1630;color:#fff;min-height:100vh}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:#fff;min-height:100vh}
 
-/* Header */
-header{background:var(--dark);padding:.9rem 1.5rem;display:flex;align-items:center;
-  gap:1rem;flex-wrap:wrap;border-bottom:2px solid var(--navy)}
-.brand{font-size:1.3rem;font-weight:800;letter-spacing:1px}
-.brand span{color:var(--light)}
-.page-title{font-size:1rem;color:var(--light);font-weight:600}
+/* ── HEADER ─────────────────────────────────────────────────────────────── */
+header{
+  background:linear-gradient(135deg,var(--dark) 0%,var(--navy) 100%);
+  padding:14px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  border-bottom:1px solid rgba(255,255,255,.1);
+  box-shadow:0 2px 20px rgba(0,0,0,.4);
+}
+.logo-plate{background:#fff;border-radius:10px;padding:7px 14px;
+  display:flex;align-items:center;box-shadow:0 2px 6px rgba(0,0,0,.15);flex-shrink:0;}
+.logo-plate img{height:24px;display:block;}
+.page-title{font-size:15px;font-weight:700;color:rgba(255,255,255,.85);}
 .spacer{flex:1}
-.refresh-info{font-size:.8rem;color:rgba(255,255,255,.5);white-space:nowrap}
+.date-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;
+  white-space:nowrap;text-transform:capitalize;}
 
 /* Module switcher */
-.mod-sw{position:relative;flex-shrink:0}
-.mod-sw-btn{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);
-  color:#fff;border-radius:8px;padding:.4rem 1rem;font-size:.9rem;font-weight:600;
-  cursor:pointer;display:flex;align-items:center;gap:.5rem;white-space:nowrap}
-.mod-sw-btn:hover{background:rgba(255,255,255,.25)}
-.mod-sw-menu{position:absolute;top:calc(100% + 6px);right:0;background:#1a2660;
-  border:1px solid var(--navy);border-radius:10px;overflow:hidden;min-width:220px;
-  display:none;z-index:600}
-.mod-sw-menu.open{display:block}
-.mod-sw-item{display:block;width:100%;padding:.8rem 1.2rem;text-align:left;
-  border:none;background:none;font-size:.95rem;cursor:pointer;color:#cdd5f0;font-family:var(--font)}
-.mod-sw-item:hover{background:rgba(255,255,255,.08)}
-.mod-sw-item.active{color:#fff;font-weight:700}
+.mod-sw{position:relative;flex-shrink:0;}
+.mod-sw-btn{
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
+  color:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;
+  font-family:'Inter',sans-serif;transition:background .15s;
+}
+.mod-sw-btn:hover{background:rgba(255,255,255,.2);}
+.mod-sw-menu{
+  position:absolute;top:calc(100% + 8px);right:0;background:#1a2660;
+  border:1px solid var(--border);border-radius:10px;overflow:hidden;min-width:220px;
+  display:none;z-index:600;box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+.mod-sw-menu.open{display:block;}
+.mod-sw-item{display:block;width:100%;padding:11px 16px;text-align:left;
+  border:none;background:none;font-size:13px;cursor:pointer;color:rgba(255,255,255,.7);
+  font-family:'Inter',sans-serif;transition:background .12s;}
+.mod-sw-item:hover{background:rgba(255,255,255,.08);}
+.mod-sw-item.active{color:#fff;font-weight:700;background:rgba(63,79,163,.3);}
 
-/* Date badge */
-.date-badge{background:var(--navy);border-radius:8px;padding:.35rem .9rem;
-  font-size:.85rem;font-weight:600;white-space:nowrap}
+.refresh-info{font-size:11.5px;color:rgba(255,255,255,.45);white-space:nowrap;}
+.back-btn{
+  background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);
+  border-radius:7px;padding:6px 12px;font-size:12px;text-decoration:none;white-space:nowrap;
+  font-family:'Inter',sans-serif;font-weight:600;transition:background .15s;
+}
+.back-btn:hover{background:rgba(255,255,255,.2);}
 
-/* ── SALAS ─── */
-.salas-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;padding:1.5rem;max-width:1400px;margin:0 auto}
-@media(max-width:700px){.salas-grid{grid-template-columns:1fr}}
-.sala-card{background:#1a2660;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.3)}
-.sala-header{padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid rgba(255,255,255,.08)}
-.sala-name{font-size:1.1rem;font-weight:800;letter-spacing:.5px}
-.sala-sub{font-size:.78rem;color:rgba(255,255,255,.55);margin-top:.15rem}
-.sala-status{font-size:.8rem;font-weight:700;padding:.3rem .8rem;border-radius:20px}
-.pill-free{background:rgba(39,174,96,.25);color:#5ee68f;border:1px solid rgba(39,174,96,.4)}
-.pill-busy{background:rgba(230,126,34,.25);color:#f5a623;border:1px solid rgba(230,126,34,.4)}
-.pill-now{background:rgba(192,57,43,.35);color:#ff7675;border:1px solid rgba(192,57,43,.5);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-.sala-body{padding:1.25rem}
-.timeline{display:flex;flex-direction:column;gap:.5rem}
-.tl-row{display:flex;gap:.75rem;align-items:flex-start;font-size:.85rem;padding:.5rem .75rem;
-  border-radius:8px;background:rgba(255,255,255,.05)}
-.tl-row.current{background:rgba(192,57,43,.2);border:1px solid rgba(192,57,43,.35)}
-.tl-row.upcoming{background:rgba(63,79,163,.2);border:1px solid rgba(63,79,163,.35)}
-.tl-time{min-width:90px;color:var(--light);font-weight:600;font-size:.82rem}
-.tl-name{color:#fff}
-.tl-empty{color:rgba(255,255,255,.35);font-style:italic;font-size:.85rem;padding:.5rem .75rem}
-.tl-free{color:var(--green)}
+/* ── SALAS ──────────────────────────────────────────────────────────────── */
+.salas-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:24px;max-width:1200px;margin:0 auto;}
+@media(max-width:680px){.salas-grid{grid-template-columns:1fr;padding:16px;}}
+.sala-card{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.3);}
+.sala-header{
+  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.sala-name{font-size:16px;font-weight:800;letter-spacing:.3px;}
+.sala-sub{font-size:12px;color:rgba(255,255,255,.45);margin-top:3px;}
+.sala-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.pill-free{background:rgba(26,158,85,.2);color:#5ee68f;border:1px solid rgba(26,158,85,.35);}
+.pill-busy{background:rgba(214,69,69,.25);color:#ff8080;border:1px solid rgba(214,69,69,.4);animation:pulse 2s infinite;}
+.pill-soon{background:rgba(217,119,6,.2);color:#fbbf24;border:1px solid rgba(217,119,6,.35);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 
-/* ── PUESTOS ─── */
-.puestos-wrap{padding:1.5rem;max-width:1400px;margin:0 auto}
-.bloque-label{font-size:.85rem;font-weight:700;color:var(--light);letter-spacing:1px;
-  text-transform:uppercase;margin-bottom:.75rem;margin-top:1.25rem}
-.puestos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.85rem}
-.puesto-card{background:#1a2660;border-radius:12px;padding:.9rem 1rem;
-  border-top:4px solid var(--navy);transition:border-color .3s}
-.puesto-card.state-free{border-top-color:var(--green)}
-.puesto-card.state-busy{border-top-color:var(--navy)}
-.puesto-card.state-soon{border-top-color:var(--amber)}
-.puesto-card.state-off{border-top-color:#555;opacity:.6}
-.puesto-card .p-name{font-size:.85rem;font-weight:800;color:#fff;margin-bottom:.35rem}
-.puesto-card .p-pill{display:inline-block;font-size:.72rem;font-weight:700;
-  padding:.15rem .55rem;border-radius:10px;margin-bottom:.4rem}
-.p-pill.pill-free{background:rgba(39,174,96,.2);color:#5ee68f;border:1px solid rgba(39,174,96,.35)}
-.p-pill.pill-busy{background:rgba(63,79,163,.25);color:var(--light);border:1px solid rgba(63,79,163,.4)}
-.p-pill.pill-soon{background:rgba(230,126,34,.2);color:#f5a623;border:1px solid rgba(230,126,34,.35)}
-.p-pill.pill-off{background:rgba(150,150,150,.15);color:#888;border:1px solid #555}
-.puesto-card .p-info{font-size:.75rem;color:rgba(255,255,255,.55);margin-top:.2rem;line-height:1.4}
+.sala-body{padding:16px 20px;}
+.tl-empty{color:rgba(255,255,255,.3);font-style:italic;font-size:13px;padding:8px 0;}
+.tl-row{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:9px 12px;border-radius:8px;margin-bottom:6px;font-size:13px;
+}
+.tl-row.past{background:rgba(255,255,255,.03);opacity:.55;}
+.tl-row.current{background:rgba(214,69,69,.18);border:1px solid rgba(214,69,69,.3);}
+.tl-row.upcoming{background:rgba(63,79,163,.18);border:1px solid rgba(63,79,163,.25);}
+.tl-time{min-width:96px;font-weight:700;font-size:12px;color:var(--light);}
+.tl-row.current .tl-time{color:#ff8080;}
+.tl-name{color:#fff;font-weight:500;}
+.tl-row.past .tl-name{color:rgba(255,255,255,.5);}
 
-/* Loading */
+/* ── PUESTOS ────────────────────────────────────────────────────────────── */
+.puestos-wrap{padding:24px;max-width:1200px;margin:0 auto;}
+.puestos-group{margin-bottom:20px;}
+.group-label{font-size:11px;font-weight:700;color:var(--light);letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:10px;padding-left:2px;}
+.puestos-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media(max-width:600px){.puestos-row{grid-template-columns:repeat(2,1fr);}}
+
+.puesto-card{
+  background:var(--card);border-radius:12px;padding:14px 12px;
+  border-left:4px solid var(--border);transition:border-color .3s;
+}
+.puesto-card.state-free{border-left-color:var(--green);}
+.puesto-card.state-busy{border-left-color:var(--red);}
+.puesto-card.state-soon{border-left-color:var(--amber);}
+.puesto-card.state-past{border-left-color:rgba(139,152,217,.35);opacity:.6;}
+.puesto-card.state-off{border-left-color:#444;opacity:.45;}
+
+.p-id{font-size:15px;font-weight:800;color:#fff;margin-bottom:6px;}
+.p-pill{
+  display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;
+  border-radius:20px;margin-bottom:6px;
+}
+.p-pill.free{background:rgba(26,158,85,.2);color:#5ee68f;border:1px solid rgba(26,158,85,.3);}
+.p-pill.busy{background:rgba(214,69,69,.2);color:#ff8080;border:1px solid rgba(214,69,69,.3);}
+.p-pill.soon{background:rgba(217,119,6,.2);color:#fbbf24;border:1px solid rgba(217,119,6,.3);}
+.p-pill.off{background:rgba(100,100,100,.2);color:#888;border:1px solid #555;}
+
+.p-advisor{font-size:11.5px;color:rgba(255,255,255,.75);margin-top:2px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.p-time{font-size:10.5px;color:rgba(255,255,255,.4);margin-top:2px;}
+.p-next{font-size:10.5px;color:rgba(251,191,36,.7);margin-top:3px;}
+
+/* ── LOADING ────────────────────────────────────────────────────────────── */
 #loadingR{display:flex;align-items:center;justify-content:center;height:60vh;
-  flex-direction:column;gap:1rem;color:var(--light)}
-.spin{width:40px;height:40px;border:4px solid rgba(255,255,255,.2);
-  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+  flex-direction:column;gap:14px;color:var(--light);}
+.spin{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand">FACE <span>IPC</span></div>
+  <div class="logo-plate"><img src="assets/face-logo-color.png" alt="FACE Financial Advisors"></div>
   <span class="page-title" id="pageTitle">Resumen del día</span>
   <div class="date-badge" id="dateBadge">—</div>
   <div class="spacer"></div>
@@ -109,11 +146,8 @@ header{background:var(--dark);padding:.9rem 1.5rem;display:flex;align-items:cent
       <button class="mod-sw-item" id="msItemPuestos" onclick="switchMode('puestos')">🗂 Puestos de Trabajo</button>
     </div>
   </div>
-  <div class="refresh-info" id="refreshInfo">Actualiza automáticamente</div>
-  <a href="index.html" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);
-    border-radius:6px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;white-space:nowrap">
-    ← Reservaciones
-  </a>
+  <span class="refresh-info" id="refreshInfo">Actualizando…</span>
+  <a href="index.html" class="back-btn">← Reservaciones</a>
 </header>
 
 <div id="loadingR">
@@ -128,110 +162,182 @@ header{background:var(--dark);padding:.9rem 1.5rem;display:flex;align-items:cent
 
 <!-- PUESTOS -->
 <div id="viewPuestos" style="display:none">
-  <div class="puestos-wrap">
-    <div class="bloque-label">Bloque A — P1 a P8</div>
-    <div class="puestos-grid" id="gridBloqueA"></div>
-    <div class="bloque-label">Bloque B — P9 a P16</div>
-    <div class="puestos-grid" id="gridBloqueB"></div>
-  </div>
+  <div class="puestos-wrap" id="puestosWrap"></div>
 </div>
 
 <script>
-const API_URL='https://script.google.com/macros/s/AKfycbyUjlA-a-4NdWXJf7jk15Q9zgBVMDPEWWw9qKW518xsVQrP94H7JiflPOg8FTcwKAzLjA/exec';
-const ROOMS={IPC:{label:'Sala IPC',cap:'8 pers.',tv:'Samsung 85"'},NASDAQ:{label:'Sala NASDAQ',cap:'6 pers.',tv:'The Frame'}};
-let currentMode='salas', puestosConfig=[], refreshTimer=null;
+const API_URL = 'https://script.google.com/macros/s/AKfycbyUjlA-a-4NdWXJf7jk15Q9zgBVMDPEWWw9qKW518xsVQrP94H7JiflPOg8FTcwKAzLjA/exec';
 
-function pad2(n){return String(n).padStart(2,'0')}
-function todayStr(){return new Date().toISOString().slice(0,10)}
+const ROOMS = {
+  IPC:    { label:'Sala IPC',    cap:'8 personas', equip:'Proyector Samsung' },
+  NASDAQ: { label:'Sala NASDAQ', cap:'6 personas', equip:'Pantalla The Frame' }
+};
 
-function toggleModSw(){document.getElementById('modSwMenu').classList.toggle('open')}
-document.addEventListener('click',e=>{
+// Puestos agrupados: 1-4, 5-8, 9-12, 13-16
+const GRUPOS = [
+  { label:'Puestos 1 – 4',  ids:['P1','P2','P3','P4']  },
+  { label:'Puestos 5 – 8',  ids:['P5','P6','P7','P8']  },
+  { label:'Puestos 9 – 12', ids:['P9','P10','P11','P12'] },
+  { label:'Puestos 13 – 16',ids:['P13','P14','P15','P16'] }
+];
+
+let currentMode = 'salas';
+let puestosConfig = [];
+let refreshTimer = null;
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function toggleModSw(){ document.getElementById('modSwMenu').classList.toggle('open'); }
+document.addEventListener('click', e => {
   if(!document.getElementById('modSw').contains(e.target))
     document.getElementById('modSwMenu').classList.remove('open');
 });
 
 function switchMode(m){
-  currentMode=m;
-  document.getElementById('modSwLabel').textContent=m==='salas'?'🏢 Salas de Juntas':'🗂 Puestos de Trabajo';
-  document.getElementById('msItemSalas').classList.toggle('active',m==='salas');
-  document.getElementById('msItemPuestos').classList.toggle('active',m==='puestos');
+  currentMode = m;
+  document.getElementById('modSwLabel').textContent = m==='salas' ? '🏢 Salas de Juntas' : '🗂 Puestos de Trabajo';
+  document.getElementById('msItemSalas').classList.toggle('active', m==='salas');
+  document.getElementById('msItemPuestos').classList.toggle('active', m==='puestos');
   document.getElementById('modSwMenu').classList.remove('open');
-  document.getElementById('pageTitle').textContent=m==='salas'?'Resumen de Salas':'Resumen de Puestos';
+  document.getElementById('pageTitle').textContent = m==='salas' ? 'Resumen de Salas' : 'Resumen de Puestos';
   history.replaceState(null,'',`?m=${m}`);
   startRefresh();
 }
 
+// ── SALAS ────────────────────────────────────────────────────────────────────
 async function loadSalas(){
-  const today=todayStr();
-  const now=new Date(); const nowH=now.getHours()+now.getMinutes()/60;
-  let bookings=[];
-  try{const d=await fetch(API_URL+'?date='+today);const j=await d.json();bookings=j.bookings||[];}catch{}
-  const html=Object.entries(ROOMS).map(([rid,r])=>{
-    const rbs=bookings.filter(b=>b.room===rid).sort((a,b)=>a.time.localeCompare(b.time));
-    const curB=rbs.find(b=>{const s=Number(b.time?.slice(0,2)),d=Math.max(1,Number(b.duration)||1);return s<=nowH&&nowH<s+d;});
-    const nextB=!curB?rbs.find(b=>Number(b.time?.slice(0,2))>nowH):null;
-    let pillCls='pill-free', pillTxt='Disponible';
-    if(curB){pillCls='pill-now';pillTxt='En uso ahora';}
-    else if(nextB){const diff=Number(nextB.time?.slice(0,2))-nowH;pillCls=diff<1?'pill-busy':'pill-free';pillTxt=diff<1?`Pronto: ${nextB.time}`:`Libre · próx. ${nextB.time}`;}
-    let tlHtml='';
-    if(!rbs.length){tlHtml=`<div class="tl-empty tl-free">Ninguna reserva hoy</div>`;}
-    else rbs.forEach(b=>{
-      const s=Number(b.time?.slice(0,2)),d=Math.max(1,Number(b.duration)||1);
-      const isCur=s<=nowH&&nowH<s+d;
-      tlHtml+=`<div class="tl-row ${isCur?'current':'upcoming'}">
-        <div class="tl-time">${pad2(s)}:00 – ${pad2(s+d)}:00</div>
-        <div class="tl-name">${b.advisor}</div>
-      </div>`;
+  const today = todayStr();
+  const now = new Date();
+  const nowH = now.getHours() + now.getMinutes()/60;
+
+  let bookings = [];
+  try{
+    const d = await fetch(`${API_URL}?date=${today}`);
+    const j = await d.json();
+    bookings = Array.isArray(j) ? j : (j.bookings || []);
+  }catch{}
+
+  const html = Object.entries(ROOMS).map(([rid, r]) => {
+    const rbs = bookings.filter(b => b.room===rid).sort((a,b) => a.time.localeCompare(b.time));
+
+    const curB = rbs.find(b => {
+      const s = Number(b.time?.slice(0,2)), d = Math.max(1, Number(b.duration)||1);
+      return s <= nowH && nowH < s+d;
     });
+    const nextB = !curB ? rbs.find(b => Number(b.time?.slice(0,2)) > nowH) : null;
+
+    let pillCls = 'pill-free', pillTxt = 'Disponible';
+    if(curB){ pillCls='pill-busy'; pillTxt='En uso ahora'; }
+    else if(nextB){
+      const diff = Number(nextB.time?.slice(0,2)) - nowH;
+      if(diff < 1){ pillCls='pill-soon'; pillTxt=`Pronto · ${nextB.time}`; }
+      else { pillCls='pill-free'; pillTxt=`Libre · próx. ${nextB.time}`; }
+    }
+
+    let tlHtml = '';
+    if(!rbs.length){
+      tlHtml = '<div class="tl-empty">Ninguna reserva hoy</div>';
+    } else {
+      rbs.forEach(b => {
+        const s = Number(b.time?.slice(0,2)), d = Math.max(1, Number(b.duration)||1);
+        const isCur = s <= nowH && nowH < s+d;
+        const isPast = (s+d) <= nowH;
+        const cls = isCur ? 'current' : isPast ? 'past' : 'upcoming';
+        tlHtml += `<div class="tl-row ${cls}">
+          <div class="tl-time">${pad2(s)}:00 – ${pad2(s+d)}:00</div>
+          <div class="tl-name">${b.advisor}</div>
+        </div>`;
+      });
+    }
+
     return `<div class="sala-card">
       <div class="sala-header">
-        <div><div class="sala-name">${r.label}</div><div class="sala-sub">${r.cap} · ${r.tv}</div></div>
-        <div class="sala-status ${pillCls}">${pillTxt}</div>
+        <div>
+          <div class="sala-name">${r.label}</div>
+          <div class="sala-sub">${r.cap} · ${r.equip}</div>
+        </div>
+        <div class="sala-pill ${pillCls}">${pillTxt}</div>
       </div>
-      <div class="sala-body"><div class="timeline">${tlHtml}</div></div>
+      <div class="sala-body">${tlHtml}</div>
     </div>`;
   }).join('');
-  document.getElementById('salasGrid').innerHTML=html;
+
+  document.getElementById('salasGrid').innerHTML = html;
 }
 
+// ── PUESTOS ──────────────────────────────────────────────────────────────────
 async function loadPuestos(){
   if(!puestosConfig.length){
-    try{const d=await fetch(API_URL+'?action=puestos');const j=await d.json();puestosConfig=j.puestos||[];}catch{}
+    try{
+      const d = await fetch(`${API_URL}?action=puestos`);
+      const j = await d.json();
+      puestosConfig = Array.isArray(j) ? j : (j.puestos || []);
+    }catch{}
   }
-  const today=todayStr(); const now=new Date(); const nowH=now.getHours()+now.getMinutes()/60;
-  let bookings=[];
-  try{const d=await fetch(`${API_URL}?action=reservasPuestos&date=${today}`);const j=await d.json();bookings=j.bookings||[];}catch{}
+
+  const today = todayStr();
+  const now = new Date();
+  const nowH = now.getHours() + now.getMinutes()/60;
+
+  let bookings = [];
+  try{
+    const d = await fetch(`${API_URL}?action=reservasPuestos&date=${today}`);
+    const j = await d.json();
+    bookings = Array.isArray(j) ? j : (j.bookings || []);
+  }catch{}
 
   function renderCard(pid){
-    const cfg=puestosConfig.find(p=>p.id===pid);
-    const active=cfg?.disponible!==false;
-    const bs=bookings.filter(b=>b.puesto===pid);
-    const curB=bs.find(b=>{const s=Number(b.time?.slice(0,2)),d=Math.max(1,Number(b.duration)||1);return s<=nowH&&nowH<s+d;});
-    const nextB=!curB?bs.filter(b=>Number(b.time?.slice(0,2))>nowH).sort((a,b2)=>a.time.localeCompare(b2.time))[0]:null;
-    let state='free', pill='pill-free', pillTxt='Disponible', info='';
-    if(!active){state='off';pill='pill-off';pillTxt='No disponible';}
-    else if(curB){
-      state='busy';pill='pill-busy';
-      const s=Number(curB.time?.slice(0,2)),d=Math.max(1,Number(curB.duration)||1);
-      pillTxt='En uso'; info=`${curB.advisor}<br>${pad2(s)}:00 – ${pad2(s+d)}:00`;
+    const cfg = puestosConfig.find(p => p.id===pid) || { id:pid, nombre:pid, disponible:false };
+    const active = cfg.disponible !== false;
+    const bs = bookings.filter(b => b.puesto===pid)
+      .sort((a,b2) => a.time.localeCompare(b2.time));
+
+    const curB = bs.find(b => {
+      const s = Number(b.time?.slice(0,2)), d = Math.max(1, Number(b.duration)||1);
+      return s <= nowH && nowH < s+d;
+    });
+    const pastBs = bs.filter(b => {
+      const s = Number(b.time?.slice(0,2)), d = Math.max(1, Number(b.duration)||1);
+      return (s+d) <= nowH;
+    });
+    const nextB = !curB ? bs.filter(b => Number(b.time?.slice(0,2)) > nowH)
+      .sort((a,b2) => a.time.localeCompare(b2.time))[0] : null;
+
+    let state = 'free', pillCls = 'free', pillTxt = 'Disponible';
+    let advisorLine = '', timeLine = '', nextLine = '';
+
+    if(!active){
+      state='off'; pillCls='off'; pillTxt='No disponible';
+    } else if(curB){
+      state='busy'; pillCls='busy'; pillTxt='En uso';
+      const s=Number(curB.time?.slice(0,2)), d=Math.max(1,Number(curB.duration)||1);
+      advisorLine=curB.advisor; timeLine=`${pad2(s)}:00 – ${pad2(s+d)}:00`;
     } else if(nextB){
-      const s=Number(nextB.time?.slice(0,2)),d=Math.max(1,Number(nextB.duration)||1);
-      if(s-nowH<1){state='soon';pill='pill-soon';pillTxt='Próxima &lt;1h';}
-      info=`Próx: ${pad2(s)}:00 – ${pad2(s+d)}:00<br>${nextB.advisor}`;
+      const s=Number(nextB.time?.slice(0,2)), d=Math.max(1,Number(nextB.duration)||1);
+      const diff=s-nowH;
+      if(diff<1){ state='soon'; pillCls='soon'; pillTxt='Próxima <1h'; }
+      advisorLine=nextB.advisor; timeLine=`${pad2(s)}:00 – ${pad2(s+d)}:00`;
     }
+
     return `<div class="puesto-card state-${state}">
-      <div class="p-name">${cfg?.nombre||pid}</div>
-      <span class="p-pill ${pill}">${pillTxt}</span>
-      ${info?`<div class="p-info">${info}</div>`:''}
+      <div class="p-id">${cfg.nombre||pid}</div>
+      <span class="p-pill ${pillCls}">${pillTxt}</span>
+      ${advisorLine?`<div class="p-advisor">${advisorLine}</div>`:''}
+      ${timeLine?`<div class="p-time">${timeLine}</div>`:''}
     </div>`;
   }
 
-  const bloqueA=['P1','P2','P3','P4','P5','P6','P7','P8'];
-  const bloqueB=['P9','P10','P11','P12','P13','P14','P15','P16'];
-  document.getElementById('gridBloqueA').innerHTML=bloqueA.map(renderCard).join('');
-  document.getElementById('gridBloqueB').innerHTML=bloqueB.map(renderCard).join('');
+  const wrap = document.getElementById('puestosWrap');
+  wrap.innerHTML = GRUPOS.map(g => `
+    <div class="puestos-group">
+      <div class="group-label">${g.label}</div>
+      <div class="puestos-row">${g.ids.map(renderCard).join('')}</div>
+    </div>
+  `).join('');
 }
 
+// ── REFRESH ───────────────────────────────────────────────────────────────────
 async function refresh(){
   document.getElementById('loadingR').style.display='none';
   if(currentMode==='salas'){
@@ -243,19 +349,21 @@ async function refresh(){
     document.getElementById('viewSalas').style.display='none';
     await loadPuestos();
   }
-  const now=new Date();
-  document.getElementById('refreshInfo').textContent=`Actualizado: ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-  document.getElementById('dateBadge').textContent=now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  const now = new Date();
+  document.getElementById('refreshInfo').textContent =
+    `Actualizado: ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  document.getElementById('dateBadge').textContent =
+    now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
 }
 
 function startRefresh(){
-  if(refreshTimer)clearInterval(refreshTimer);
+  if(refreshTimer) clearInterval(refreshTimer);
   refresh();
-  refreshTimer=setInterval(refresh,5*60*1000);
+  refreshTimer = setInterval(refresh, 5*60*1000);
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
-  const m=new URLSearchParams(location.search).get('m')||'salas';
+  const m = new URLSearchParams(location.search).get('m') || 'salas';
   if(m==='puestos'){
     currentMode='puestos';
     document.getElementById('modSwLabel').textContent='🗂 Puestos de Trabajo';

@@ -88,14 +88,27 @@ function getPuestosConfigSheet() {
   let s = ss.getSheetByName(PUESTOS_CONFIG_SHEET);
   if (!s) {
     s = ss.insertSheet(PUESTOS_CONFIG_SHEET);
-    s.appendRow(["id","nombre","disponible"]);
+    s.appendRow(["id","nombre","disponible","puestoFijo"]);
     for (let i = 1; i <= 16; i++) {
-      s.appendRow(["P"+i, "Puesto #"+i, i !== 1]); // #1 starts as false
+      s.appendRow(["P"+i, "Puesto #"+i, i !== 1, ""]); // #1 starts as false
     }
-    s.getRange(1,1,1,3).setFontWeight("bold");
+    s.getRange(1,1,1,4).setFontWeight("bold");
     s.setFrozenRows(1);
   }
   return s;
+}
+
+/** Corre una vez para agregar la columna puestoFijo a la hoja "Puestos de Trabajo" si aún no existe. */
+function migratePuestosSheet() {
+  const s = getPuestosConfigSheet();
+  const headers = s.getRange(1,1,1,s.getLastColumn()).getValues()[0];
+  if (headers.indexOf("puestoFijo") === -1) {
+    const col = s.getLastColumn() + 1;
+    s.getRange(1, col).setValue("puestoFijo").setFontWeight("bold");
+    Logger.log("Columna puestoFijo agregada a Puestos de Trabajo.");
+  } else {
+    Logger.log("La columna puestoFijo ya existe.");
+  }
 }
 
 function getReservasPuestosSheet() {
@@ -134,14 +147,19 @@ function readPuestosConfig() {
   const s = getPuestosConfigSheet();
   const data = s.getDataRange().getValues();
   const headers = data.shift();
-  const idx = buildIdx(headers, ["id","nombre","disponible"]);
+  const idx = buildIdx(headers, ["id","nombre","disponible","puestoFijo"]);
   return data
     .filter(row => String(row[idx.id]).trim() !== "")
-    .map(row => ({
-      id:         String(row[idx.id]).trim(),
-      nombre:     String(row[idx.nombre]).trim(),
-      disponible: row[idx.disponible]===true || String(row[idx.disponible]).toLowerCase()==="true"
-    }));
+    .map(row => {
+      const fijo = idx.puestoFijo >= 0 ? String(row[idx.puestoFijo]).trim() : "";
+      const fijoVal = (fijo === "" || fijo.toLowerCase() === "false") ? "" : fijo;
+      return {
+        id:         String(row[idx.id]).trim(),
+        nombre:     String(row[idx.nombre]).trim(),
+        disponible: row[idx.disponible]===true || String(row[idx.disponible]).toLowerCase()==="true",
+        puestoFijo: fijoVal   // "" = libre, "true" = bloqueado sin nombre, o nombre del asesor
+      };
+    });
 }
 
 // ─── Normalización de nombres ─────────────────────────────────────────────────
@@ -191,6 +209,29 @@ function doGet(e) {
         duration: Number(r[idx.duration])||1,
         advisor:  r[idx.advisor]
       }));
+
+    // Inyectar reservas virtuales de puestos fijos (solo cuando hay filtro de fecha)
+    if (date) {
+      const pConfig = readPuestosConfig();
+      pConfig.forEach(pc => {
+        if (!pc.puestoFijo) return;
+        const advisorFijo = pc.puestoFijo.toLowerCase() === "true" ? "—" : pc.puestoFijo;
+        // Solo inyectar si no hay ya una reserva real que cubra todo el día
+        const alreadyCovered = rows.some(r => r.puesto === pc.id && r.date === date);
+        if (!alreadyCovered) {
+          rows.push({
+            id:       "fixed_" + pc.id + "_" + date,
+            puesto:   pc.id,
+            date:     date,
+            time:     "07:00",
+            duration: 13,   // 07:00–20:00
+            advisor:  advisorFijo,
+            fixed:    true
+          });
+        }
+      });
+    }
+
     return jsonResponse(rows);
   }
 
@@ -386,6 +427,20 @@ function handleCreatePuesto(sheet, body) {
   const pConfig = readPuestosConfig();
   const pc = pConfig.find(p=>p.id===puesto);
   if (!pc||!pc.disponible) return jsonResponse({ok:false,message:"Este puesto no está disponible."});
+
+  // Verificar puesto fijo — solo el asesor asignado (o admin) puede reservarlo
+  if (pc.puestoFijo && pc.puestoFijo.toLowerCase() !== "true") {
+    const lock0 = LockService.getScriptLock(); lock0.waitLock(10000);
+    try {
+      const advisors0 = readAdvisors();
+      if (!isAdmin(advisor, advisors0) && normalizeName(pc.puestoFijo) !== normalizeName(advisor))
+        return jsonResponse({ok:false,message:`Este puesto está asignado a ${pc.puestoFijo}.`});
+    } finally { lock0.releaseLock(); }
+  } else if (pc.puestoFijo && pc.puestoFijo.toLowerCase() === "true") {
+    const advisors0 = readAdvisors();
+    if (!isAdmin(advisor, advisors0))
+      return jsonResponse({ok:false,message:"Este puesto no está disponible para reservas."});
+  }
 
   const lock=LockService.getScriptLock(); lock.waitLock(10000);
   try {

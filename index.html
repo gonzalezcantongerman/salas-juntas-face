@@ -364,9 +364,11 @@ footer a:hover{text-decoration:underline;}
       </div>
     </div>
   </div>
-  <div id="userBox" style="display:none">
-    <div class="avatar" id="avatarEl">?</div>
-    <span id="userName">—</span>
+  <div id="userBox" style="display:none;align-items:center;gap:10px;">
+    <div style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
+      <span style="font-size:11px;color:rgba(255,255,255,.6);font-weight:400;">Bienvenido,</span>
+      <span id="userName" style="font-size:14px;font-weight:700;color:#fff;">—</span>
+    </div>
     <button class="btn-logout" onclick="doLogout()">Salir</button>
   </div>
 </header>
@@ -444,7 +446,10 @@ footer a:hover{text-decoration:underline;}
   <!-- Lista salas -->
   <div class="tab-content" id="stab-ver">
     <div class="panel">
-      <h2>Histórico de reservas</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 style="margin-bottom:0;">Histórico de reservas</h2>
+        <button class="btn-secondary" onclick="exportSalasCSV()" style="padding:8px 14px;font-size:12px;">⬇ Exportar Excel</button>
+      </div>
       <div class="form-grid">
         <div class="field"><label>Desde</label><input type="date" id="sDateFrom" onchange="loadSalasTable()"></div>
         <div class="field"><label>Hasta</label><input type="date" id="sDateTo" onchange="loadSalasTable()"></div>
@@ -593,7 +598,10 @@ footer a:hover{text-decoration:underline;}
   <!-- Lista puestos -->
   <div class="tab-content" id="ptab-ver">
     <div class="panel">
-      <h2>Histórico de reservas</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 style="margin-bottom:0;">Histórico de reservas</h2>
+        <button class="btn-secondary" onclick="exportPuestosCSV()" style="padding:8px 14px;font-size:12px;">⬇ Exportar Excel</button>
+      </div>
       <div class="form-grid" style="margin-bottom:14px;">
         <div class="field"><label>Desde</label><input type="date" id="vFrom" onchange="loadTableP()"></div>
         <div class="field"><label>Hasta</label><input type="date" id="vTo" onchange="loadTableP()"></div>
@@ -833,7 +841,6 @@ function doLogin(){
   document.getElementById('loginOverlay').style.display='none';
   document.getElementById('userBox').style.display='flex';
   document.getElementById('userName').textContent=name.split(' ')[0];
-  document.getElementById('avatarEl').textContent=name.charAt(0).toUpperCase();
   setDateInputLimits();
   onAfterLogin();
 }
@@ -1488,7 +1495,6 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   if(currentUser){
     document.getElementById('userBox').style.display='flex';
     document.getElementById('userName').textContent=currentUser.split(' ')[0];
-    document.getElementById('avatarEl').textContent=currentUser.charAt(0).toUpperCase();
     setDateInputLimits();
     onAfterLogin();
   } else {
@@ -1497,6 +1503,37 @@ window.addEventListener('DOMContentLoaded',async ()=>{
 
   document.getElementById('loadingOverlay').style.display='none';
 });
+
+// ─── Exportar CSV / Excel ─────────────────────────────────────────────────────
+function exportCSV(rows, filename){
+  const bom='﻿';
+  const csv=bom+rows.map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=filename; a.click();
+}
+function exportSalasCSV(){
+  const list=window.__salasTblCache||[];
+  if(!list.length){showToast('No hay datos para exportar','err');return;}
+  const header=['Fecha','Sala','Hora inicio','Hora fin','Duración (h)','Asesor'];
+  const rows=list.map(b=>{
+    const room=ROOMS.find(r=>r.id===b.room);
+    const sH=parseInt(b.time.split(':')[0],10);
+    return [b.date, room?room.label:b.room, b.time, hourLabel(Math.min(sH+(b.duration||1),24)), b.duration||1, b.advisor];
+  });
+  exportCSV([header,...rows],`reservas-salas-${todayStr()}.csv`);
+}
+function exportPuestosCSV(){
+  const tbody=document.getElementById('tblBody');
+  if(!tbody||!tbody.querySelectorAll('tr').length){showToast('No hay datos para exportar','err');return;}
+  const rows=[['Puesto','Fecha','Hora inicio','Hora fin','Duración (h)','Asesor']];
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const cells=[...tr.querySelectorAll('td')];
+    if(cells.length>=4) rows.push([cells[0].textContent.trim(),cells[1].textContent.trim(),
+      cells[2].textContent.trim(),'',cells[3].textContent.trim()]);
+  });
+  exportCSV(rows,`reservas-puestos-${todayStr()}.csv`);
+}
 
 // Wire hora fin change
 document.getElementById('rHoraFin').addEventListener('change',onHoraFinChange);
