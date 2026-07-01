@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumen de Hoy · FACE Salas de Juntas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#3F4FA3;
+    --dark:#2B3673;
+    --light:#8B98D9;
+    --green:#1A9E55;
+    --amber:#D97706;
+    --red:#D64545;
+    --bg:#F4F6FB;
+    --card:#fff;
+    --border:#E3E6F0;
+    --ink:#111418;
+    --muted:#6B7280;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ── HEADER ── */
+  header{
+    background:linear-gradient(135deg, var(--dark) 0%, var(--navy) 100%);
+    padding:18px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:0 2px 20px rgba(43,54,115,.25);
+    flex-shrink:0;
+  }
+  .hdr-brand{display:flex;align-items:center;gap:16px;}
+  .logo-plate{background:#fff;border-radius:10px;padding:7px 14px;display:flex;align-items:center;box-shadow:0 2px 6px rgba(0,0,0,.08);}
+  .logo-plate img{height:24px;display:block;}
+  .hdr-title{color:#fff;}
+  .hdr-title .main{font-size:17px;font-weight:700;letter-spacing:-.01em;}
+  .hdr-title .sub{font-size:12px;font-weight:400;color:rgba(255,255,255,.6);margin-top:2px;text-transform:uppercase;letter-spacing:.06em;}
+  .hdr-clock{text-align:right;color:#fff;}
+  .hdr-clock .time{font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;}
+  .hdr-clock .date{font-size:13px;font-weight:400;color:rgba(255,255,255,.65);margin-top:4px;}
+
+  /* ── MAIN GRID ── */
+  main{
+    flex:1;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    padding:20px 24px 16px;
+  }
+
+  /* ── ROOM CARD ── */
+  .room-card{
+    background:var(--card);
+    border-radius:18px;
+    border:1px solid var(--border);
+    box-shadow:0 2px 12px rgba(43,54,115,.06);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .room-header{
+    padding:16px 20px 14px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .room-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+  .room-header-text .name{font-size:17px;font-weight:800;color:var(--dark);}
+  .room-header-text .meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .room-status-pill{
+    margin-left:auto;
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .pill-free{background:#ECFDF5;color:var(--green);border:1px solid #A7F3D0;}
+  .pill-busy{background:#FEF3C7;color:var(--amber);border:1px solid #FDE68A;}
+  .pill-now{background:#FEE2E2;color:var(--red);border:1px solid #FECACA;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+  /* ── TIMELINE ── */
+  .timeline{flex:1;overflow-y:auto;padding:8px 0;}
+  .t-row{
+    display:flex;
+    align-items:stretch;
+    min-height:44px;
+    border-bottom:1px solid var(--border);
+    position:relative;
+  }
+  .t-row:last-child{border-bottom:none;}
+  .t-row.is-now{background:linear-gradient(90deg,rgba(63,79,163,.06),transparent);}
+  .t-hour{
+    width:54px;
+    flex-shrink:0;
+    padding:0 10px 0 16px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    border-right:1px solid var(--border);
+  }
+  .t-hour.is-now{color:var(--navy);font-weight:800;}
+  .t-cell{flex:1;padding:4px 8px;display:flex;align-items:center;}
+  .t-booking{
+    width:100%;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:13px;
+    font-weight:600;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    line-height:1.2;
+  }
+  .t-booking.ipc{background:linear-gradient(135deg,var(--navy),var(--dark));}
+  .t-booking.nasdaq{background:linear-gradient(135deg,var(--light),#6B79C4);}
+  .t-booking .b-name{flex:1;}
+  .t-booking .b-time{font-size:11px;font-weight:500;opacity:.8;white-space:nowrap;}
+  .t-booking.is-now-slot{box-shadow:0 0 0 2px #fff, 0 0 0 4px var(--navy);}
+  .t-now-marker{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--navy);flex-shrink:0;
+  }
+  .t-free{color:var(--border);font-size:12px;padding-left:4px;}
+
+  /* ── FOOTER ── */
+  footer{
+    padding:10px 24px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-shrink:0;
+  }
+  .footer-refresh{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+  .refresh-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+  .footer-link{font-size:12px;color:var(--navy);text-decoration:none;font-weight:600;}
+  .footer-link:hover{text-decoration:underline;}
+
+  /* ── NO BOOKINGS ── */
+  .no-bookings{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    flex:1;padding:32px;text-align:center;color:var(--muted);
+  }
+  .no-bookings .icon{font-size:36px;margin-bottom:10px;}
+  .no-bookings p{font-size:14px;}
+
+  /* ── LOADING ── */
+  #loadingOverlay{
+    position:fixed;inset:0;background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;z-index:99;
+  }
+  .spinner-lg{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #loadingOverlay p{font-size:14px;color:var(--muted);}
+
+  @media(max-width:700px){
+    main{grid-template-columns:1fr;}
+    .hdr-clock .time{font-size:24px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+  <div class="spinner-lg"></div>
+  <p>Cargando reservas de hoy…</p>
+</div>
+
+<header>
+  <div class="hdr-brand">
+    <div class="logo-plate"><img src="assets/face-logo-color.png" alt="FACE"></div>
+    <div class="hdr-title">
+      <div class="main">Salas de Juntas</div>
+      <div class="sub">Reservas de hoy · FACE Financial Advisors CDMX</div>
+    </div>
+  </div>
+  <div class="hdr-clock">
+    <div class="time" id="clock">--:--</div>
+    <div class="date" id="dateLabel">--</div>
+  </div>
+</header>
+
+<main id="mainGrid"></main>
+
+<footer>
+  <div class="footer-refresh">
+    <div class="refresh-dot"></div>
+    <span id="refreshLabel">Actualizando cada 5 min</span>
+  </div>
+  <a class="footer-link" href="index.html">← Ir a la app completa</a>
+</footer>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbygydKMipbIkexhiX8_E-HD0ChzWJoMksxYH_FjDZEJi_RDBGN8vGvnRfmyp-AuK7qucw/exec";
+const ROOMS = [
+  {id:"IPC",    label:"Sala IPC",    cap:8, equip:"Proyector Samsung",    cls:"ipc",    dot:"#3F4FA3"},
+  {id:"NASDAQ", label:"Sala NASDAQ", cap:6, equip:"Pantalla The Frame",   cls:"nasdaq", dot:"#8B98D9"}
+];
+const START_HOUR = 7;  // hora mínima en pantalla
+const END_HOUR   = 21; // hora máxima en pantalla
+const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DAYS   = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+let bookings = [];
+
+// ── Reloj en vivo ────────────────────────────────────────────────────────────
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('dateLabel').textContent =
+    `${DAYS[now.getDay()]}, ${now.getDate()} de ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function todayStr(){
+  return new Date().toISOString().slice(0,10);
+}
+function shortName(n){
+  const parts = n.trim().split(/\s+/);
+  return parts.length===1 ? parts[0] : parts[0]+' '+parts[1].charAt(0)+'.';
+}
+function hourLabel(h){
+  return `${String(h).padStart(2,'0')}:00`;
+}
+function currentHour(){
+  return new Date().getHours();
+}
+
+// ── Fetch ─────────────────────────────────────────────────────────────────────
+async function loadData(){
+  try{
+    const res = await fetch(`${API_URL}?date=${todayStr()}`);
+    if(res.ok) bookings = await res.json();
+  }catch(e){
+    bookings = [];
+  }
+  render();
+  document.getElementById('loadingOverlay').style.display = 'none';
+  updateRefreshLabel();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(){
+  const now = currentHour();
+  const grid = document.getElementById('mainGrid');
+  grid.innerHTML = '';
+
+  ROOMS.forEach(room => {
+    const roomBookings = bookings.filter(b => b.room === room.id);
+
+    // Estado actual de la sala
+    const currentBooking = roomBookings.find(b => {
+      const s = parseInt(b.time.split(':')[0],10);
+      return now >= s && now < s + (b.duration||1);
+    });
+    const nextBooking = roomBookings
+      .filter(b => parseInt(b.time.split(':')[0],10) > now)
+      .sort((a,b) => a.time.localeCompare(b.time))[0];
+
+    let pillClass = 'pill-free', pillText = 'Disponible';
+    if(currentBooking){
+      pillClass = 'pill-now';
+      pillText  = 'En uso ahora';
+    } else if(nextBooking){
+      const diffH = parseInt(nextBooking.time.split(':')[0],10) - now;
+      if(diffH <= 1) { pillClass = 'pill-busy'; pillText = 'Próxima en <1h'; }
+    }
+
+    // Rango de horas a mostrar (mínimo START–END, ampliar si hay reservas fuera)
+    let minH = START_HOUR, maxH = END_HOUR;
+    roomBookings.forEach(b=>{
+      const s = parseInt(b.time.split(':')[0],10);
+      minH = Math.min(minH, s);
+      maxH = Math.max(maxH, s + (b.duration||1));
+    });
+    minH = Math.max(0, minH - 1);
+    maxH = Math.min(24, maxH + 1);
+
+    // Construir filas de timeline
+    let timelineHTML = '';
+    for(let h = minH; h < maxH; h++){
+      const isNow = h === now;
+
+      // ¿Hay una reserva que empieza aquí?
+      const startingBooking = roomBookings.find(b => parseInt(b.time.split(':')[0],10) === h);
+      // ¿Esta hora está cubierta por una reserva que empezó antes?
+      const coveringBooking = !startingBooking
+        ? roomBookings.find(b => {
+            const s = parseInt(b.time.split(':')[0],10);
+            return h > s && h < s + (b.duration||1);
+          })
+        : null;
+
+      if(coveringBooking) continue; // cubierta por rowspan visual (se omite)
+
+      const rowClass = isNow ? ' is-now' : '';
+      const hourClass = isNow ? ' is-now' : '';
+
+      timelineHTML += `<div class="t-row${rowClass}">`;
+      timelineHTML += `<div class="t-hour${hourClass}">${isNow ? '▶' : ''} ${hourLabel(h)}</div>`;
+      timelineHTML += `<div class="t-cell">`;
+
+      if(startingBooking){
+        const s = parseInt(startingBooking.time.split(':')[0],10);
+        const endH = Math.min(s + (startingBooking.duration||1), 24);
+        const nowSlotClass = (isNow || (now > s && now < endH)) ? ' is-now-slot' : '';
+        timelineHTML += `
+          <div class="t-booking ${room.cls}${nowSlotClass}">
+            <div class="b-name">${shortName(startingBooking.advisor)}</div>
+            <div class="b-time">${hourLabel(s)} – ${hourLabel(endH)}</div>
+          </div>`;
+      } else {
+        timelineHTML += `<div class="t-free">—</div>`;
+      }
+
+      timelineHTML += `</div></div>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'room-card';
+    card.innerHTML = `
+      <div class="room-header">
+        <div class="room-dot" style="background:${room.dot};box-shadow:0 0 0 4px ${room.dot}22;"></div>
+        <div class="room-header-text">
+          <div class="name">${room.label}</div>
+          <div class="meta">${room.cap} personas · ${room.equip}</div>
+        </div>
+        <div class="room-status-pill ${pillClass}">${pillText}</div>
+      </div>
+      <div class="timeline">${timelineHTML || '<div class="no-bookings"><div class="icon">📅</div><p>Sin reservas hoy</p></div>'}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── Refresh automático ────────────────────────────────────────────────────────
+let lastLoad = new Date();
+function updateRefreshLabel(){
+  lastLoad = new Date();
+}
+setInterval(()=>{
+  const diff = Math.round((new Date() - lastLoad) / 60000);
+  const label = diff === 0
+    ? 'Actualizado hace un momento'
+    : `Actualizado hace ${diff} min`;
+  document.getElementById('refreshLabel').textContent = label;
+}, 30000);
+
+// Recargar datos cada 5 minutos
+setInterval(()=>{ loadData(); }, 5 * 60 * 1000);
+
+// Volver a renderizar cada minuto (actualiza el "ahora")
+setInterval(()=>{ render(); }, 60 * 1000);
+
+// ── Inicio ────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
