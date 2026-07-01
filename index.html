@@ -523,9 +523,14 @@ footer a:hover{text-decoration:underline;}
           <rect x="8" y="270" width="88" height="242" fill="#FAF7F2" stroke="#C8B89A" stroke-width="1.5" rx="6"/>
           <text x="52" y="393" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" fill="#A08C70" transform="rotate(-90 52 393)">Mueble Café</text>
 
-          <!-- Escenario -->
-          <rect x="668" y="185" width="140" height="330" fill="#F0F0F0" stroke="#C0C0C0" stroke-width="1.5" rx="6"/>
-          <text x="738" y="358" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#999" transform="rotate(-90 738 358)">Escenario</text>
+          <!-- Escenario (reservable) -->
+          <g id="escenarioGroup" style="cursor:pointer">
+            <rect id="escenarioRect" x="668" y="185" width="140" height="330" fill="#F0F0F0" stroke="#C0C0C0" stroke-width="1.5" rx="6"/>
+            <text id="escenarioLbl" x="738" y="400" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#999" transform="rotate(-90 738 400)">Escenario</text>
+            <text id="escenarioAdv" x="738" y="325" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0)" transform="rotate(-90 738 325)"></text>
+            <text id="escenarioTime" x="738" y="270" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0)" transform="rotate(-90 738 270)"></text>
+            <text x="738" y="215" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#C0C0C0" transform="rotate(-90 738 215)">click · reservar</text>
+          </g>
 
           <!-- Labels -->
           <text x="198" y="110" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#B0BAD0" font-weight="500">Bloque A</text>
@@ -550,6 +555,7 @@ footer a:hover{text-decoration:underline;}
         <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#3F4FA3,#2B3673);"></div>Ocupado</div>
         <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#1A9E55,#158C49);"></div>Mi reserva</div>
         <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#8B98D9,#6B79C4);"></div>Sala (click para reservar)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#F0F0F0;border:1px solid #C0C0C0;"></div>Escenario (click para reservar)</div>
       </div>
     </div>
   </div>
@@ -704,6 +710,7 @@ function findAdvisor(name){ const n=normalizeName(name); return advisorsData.fin
 function isAdmin(name){ const r=findAdvisor(name); return r?r.esAdmin:false; }
 function getAdvisorLimit(name){ const r=findAdvisor(name); return r?(r.limiteHoras||999):999; }
 function getAdvisorLimitP(name){ const r=findAdvisor(name); return r?(r.limiteHorasPuesto||999):999; }
+function getAdvisorLimitEscenario(name){ const r=findAdvisor(name); return r?(r.limiteHorasEscenario||999):999; }
 
 function isBookingPast(b){
   const [y,m,day]=b.date.split('-').map(Number);
@@ -1146,7 +1153,10 @@ async function loadPuestosConfig(){
     puestosConfig=DESKS.map((d,i)=>({id:d.id,nombre:'Puesto '+d.label,disponible:i>0}));
   }
 }
-function getPuestoConfig(id){ return puestosConfig.find(p=>p.id===id)||{id,nombre:id,disponible:false}; }
+function getPuestoConfig(id){
+  if(id==='ESCENARIO') return puestosConfig.find(p=>p.id==='ESCENARIO')||{id:'ESCENARIO',nombre:'Escenario',disponible:true,puestoFijo:''};
+  return puestosConfig.find(p=>p.id===id)||{id,nombre:id,disponible:false};
+}
 
 function populatePuestoSelects(){
   ['rPuesto','vPuesto'].forEach(selId=>{
@@ -1159,6 +1169,14 @@ function populatePuestoSelects(){
       if(selId==='rPuesto'&&!cfg.disponible) o.disabled=true;
       sel.appendChild(o);
     });
+    // Separador + Escenario
+    const sep=document.createElement('option'); sep.disabled=true; sep.textContent='──────────────';
+    sel.appendChild(sep);
+    const escCfg=getPuestoConfig('ESCENARIO');
+    const escOpt=document.createElement('option');
+    escOpt.value='ESCENARIO'; escOpt.textContent='🎭 Escenario';
+    if(selId==='rPuesto'&&!escCfg.disponible) escOpt.disabled=true;
+    sel.appendChild(escOpt);
   });
 }
 
@@ -1181,6 +1199,35 @@ function renderMap(){
   const g=document.getElementById('desksGroup');
   const hour=parseInt(document.getElementById('mapHour').value,10);
   g.innerHTML='';
+
+  // ── Escenario dinámico ───────────────────────────────────────────────────
+  const escBk=allBookings.find(b=>{
+    if(b.puesto!=='ESCENARIO') return false;
+    const s=parseInt(b.time.split(':')[0],10); return hour>=s&&hour<s+(b.duration||1);
+  });
+  const escRect=document.getElementById('escenarioRect');
+  const escLbl=document.getElementById('escenarioLbl');
+  const escAdv=document.getElementById('escenarioAdv');
+  const escTime=document.getElementById('escenarioTime');
+  const escGrp=document.getElementById('escenarioGroup');
+  if(escBk){
+    const isMe=normalizeName(escBk.advisor)===normalizeName(currentUser);
+    escRect.setAttribute('fill',isMe?'url(#gradGreen)':'url(#gradNavy)');
+    escRect.setAttribute('stroke',isMe?'#0F7A41':'#1E2A63');
+    escLbl.setAttribute('fill','#fff');
+    escAdv.textContent=shortName(escBk.advisor);
+    escAdv.setAttribute('fill','rgba(255,255,255,.9)');
+    const s2=parseInt(escBk.time.split(':')[0],10),dur2=escBk.duration||1;
+    escTime.textContent=`${pad2(s2)}:00–${pad2(s2+dur2)}:00`;
+    escTime.setAttribute('fill','rgba(255,255,255,.7)');
+    escGrp.onclick=()=>showDeskInfo({id:'ESCENARIO',label:'Escenario'},escBk,isMe?'mine':'other');
+  } else {
+    escRect.setAttribute('fill','#F0F0F0'); escRect.setAttribute('stroke','#C0C0C0');
+    escLbl.setAttribute('fill','#999');
+    escAdv.textContent=''; escAdv.setAttribute('fill','rgba(255,255,255,0)');
+    escTime.textContent=''; escTime.setAttribute('fill','rgba(255,255,255,0)');
+    escGrp.onclick=()=>openDeskBooking('ESCENARIO');
+  }
   DESKS.forEach(desk=>{
     const cfg=getPuestoConfig(desk.id); const disponible=cfg.disponible;
     const booking=allBookings.find(b=>{ if(b.puesto!==desk.id) return false; const s=parseInt(b.time.split(':')[0],10); return hour>=s&&hour<s+(b.duration||1); });
@@ -1324,7 +1371,7 @@ async function onPuestoOrDateChange(){
   try{ const res=await fetch(`${API_URL}?action=reservasPuestos&date=${date}`); const all=await res.json(); dayBookings=(Array.isArray(all)?all:[]).filter(b=>b.puesto===puesto); }catch{}
   const taken=new Set(); dayBookings.forEach(b=>{ const s=parseInt(b.time.split(':')[0],10); for(let i=0;i<(b.duration||1);i++) taken.add(s+i); });
   window._currentTaken=taken;
-  await updateWeeklyBarP(date);
+  await updateWeeklyBarP(date, puesto);
   const slotsEl=document.getElementById('slotsP'); slotsEl.innerHTML='';
   for(let h=SLOT_START;h<SLOT_END;h++){
     const btn=document.createElement('button'); btn.className='slot-p'+(taken.has(h)?' taken':'');
@@ -1371,24 +1418,25 @@ async function confirmBookingP(){
 }
 
 // Weekly bar puestos
-async function updateWeeklyBarP(date){
+async function updateWeeklyBarP(date, puestoId){
   const wrap=document.getElementById('weekBarWrapP');
   if(!currentUser){ wrap.style.display='none'; return; }
+  const isEsc = puestoId==='ESCENARIO';
   const d=new Date(date+'T12:00:00Z'), day=d.getUTCDay();
   d.setUTCDate(d.getUTCDate()+(day===0?-6:1-day));
   const wS=d.toISOString().slice(0,10);
-  if(_weekCacheP.advisor===normalizeName(currentUser)&&_weekCacheP.wStart===wS){ renderWeekBarP(_weekCacheP.used); return; }
   try{
     let used=0, dd=new Date(wS+'T12:00:00Z');
     const days=[]; for(let i=0;i<7;i++){ days.push(dd.toISOString().slice(0,10)); const n=new Date(dd); n.setUTCDate(n.getUTCDate()+1); dd=n; }
-    await Promise.all(days.map(async day=>{ const r=await fetch(`${API_URL}?action=reservasPuestos&date=${day}`); const list=await r.json(); if(Array.isArray(list)) list.filter(b=>normalizeName(b.advisor)===normalizeName(currentUser)).forEach(b=>{used+=(b.duration||1);}); }));
+    await Promise.all(days.map(async dy=>{ const r=await fetch(`${API_URL}?action=reservasPuestos&date=${dy}`); const list=await r.json(); if(Array.isArray(list)) list.filter(b=>normalizeName(b.advisor)===normalizeName(currentUser)&&(isEsc?b.puesto==='ESCENARIO':b.puesto!=='ESCENARIO')).forEach(b=>{used+=(b.duration||1);}); }));
+    const limit = isEsc ? getAdvisorLimitEscenario(currentUser) : getAdvisorLimitP(currentUser);
     _weekCacheP={advisor:normalizeName(currentUser),wStart:wS,used};
-    renderWeekBarP(used);
+    renderWeekBarP(used, limit);
   }catch{ wrap.style.display='none'; }
 }
 
-function renderWeekBarP(used){
-  const limit=getAdvisorLimitP(currentUser);
+function renderWeekBarP(used, limit){
+  if(limit===undefined) limit=getAdvisorLimitP(currentUser);
   const pct=Math.min(100,Math.round(used/limit*100));
   const color=pct>=100?'var(--red)':pct>=75?'var(--amber)':'var(--green)';
   document.getElementById('weekBarFillP').style.width=pct+'%';

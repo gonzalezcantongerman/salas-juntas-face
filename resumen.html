@@ -122,6 +122,33 @@ header{
 .p-time{font-size:10.5px;color:rgba(255,255,255,.4);margin-top:2px;}
 .p-next{font-size:10.5px;color:rgba(251,191,36,.7);margin-top:3px;}
 
+/* ── ESCENARIO ──────────────────────────────────────────────────────────── */
+.escenario-wrap{padding:0 24px 24px;max-width:1200px;margin:0 auto;}
+.escenario-card{
+  background:var(--card);border-radius:16px;overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.3);
+}
+.escenario-header{
+  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(135deg,rgba(63,79,163,.3),rgba(43,54,115,.2));
+}
+.escenario-name{font-size:16px;font-weight:800;}
+.escenario-sub{font-size:12px;color:rgba(255,255,255,.45);margin-top:3px;}
+.escenario-body{padding:16px 20px;}
+.escenario-tl{display:flex;flex-direction:column;gap:8px;}
+.esc-row{
+  display:flex;gap:12px;align-items:center;padding:10px 14px;
+  border-radius:8px;font-size:13px;
+}
+.esc-row.past{background:rgba(255,255,255,.03);opacity:.5;}
+.esc-row.current{background:rgba(214,69,69,.18);border:1px solid rgba(214,69,69,.3);}
+.esc-row.upcoming{background:rgba(63,79,163,.18);border:1px solid rgba(63,79,163,.25);}
+.esc-time{min-width:110px;font-weight:700;font-size:12px;color:var(--light);}
+.esc-row.current .esc-time{color:#ff8080;}
+.esc-name{color:#fff;font-weight:500;}
+.esc-row.past .esc-name{color:rgba(255,255,255,.45);}
+
 /* ── LOADING ────────────────────────────────────────────────────────────── */
 #loadingR{display:flex;align-items:center;justify-content:center;height:60vh;
   flex-direction:column;gap:14px;color:var(--light);}
@@ -163,6 +190,20 @@ header{
 <!-- PUESTOS -->
 <div id="viewPuestos" style="display:none">
   <div class="puestos-wrap" id="puestosWrap"></div>
+  <div class="escenario-wrap" id="escenarioWrap" style="display:none">
+    <div class="escenario-card">
+      <div class="escenario-header">
+        <div>
+          <div class="escenario-name">🎭 Escenario</div>
+          <div class="escenario-sub">Cartelera del día</div>
+        </div>
+        <div id="escenarioPill" class="sala-pill pill-free">Disponible</div>
+      </div>
+      <div class="escenario-body">
+        <div class="escenario-tl" id="escenarioTl"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -335,6 +376,28 @@ async function loadPuestos(){
       <div class="puestos-row">${g.ids.map(renderCard).join('')}</div>
     </div>
   `).join('');
+
+  // ── Sección Escenario ────────────────────────────────────────────────────
+  const escWrap = document.getElementById('escenarioWrap');
+  const escBkgs = bookings.filter(b=>b.puesto==='ESCENARIO').sort((a,b2)=>a.time.localeCompare(b2.time));
+  escWrap.style.display = 'block';
+  const escPill = document.getElementById('escenarioPill');
+  const curEsc = escBkgs.find(b=>{const s=Number(b.time?.slice(0,2)),d=Math.max(1,Number(b.duration)||1);return s<=nowH&&nowH<s+d;});
+  const nextEsc = !curEsc?escBkgs.find(b=>Number(b.time?.slice(0,2))>nowH):null;
+  if(curEsc){ escPill.className='sala-pill pill-busy'; escPill.textContent='En uso ahora'; }
+  else if(nextEsc){ const diff=Number(nextEsc.time?.slice(0,2))-nowH; escPill.className='sala-pill '+(diff<1?'pill-soon':'pill-free'); escPill.textContent=diff<1?`Pronto · ${nextEsc.time}`:`Libre · próx. ${nextEsc.time}`; }
+  else { escPill.className='sala-pill pill-free'; escPill.textContent='Disponible hoy'; }
+  const escTl = document.getElementById('escenarioTl');
+  if(!escBkgs.length){
+    escTl.innerHTML='<div class="tl-empty">Sin reservas de escenario hoy</div>';
+  } else {
+    escTl.innerHTML = escBkgs.map(b=>{
+      const s=Number(b.time?.slice(0,2)),d=Math.max(1,Number(b.duration)||1);
+      const isCur=s<=nowH&&nowH<s+d; const isPast=(s+d)<=nowH;
+      const cls=isCur?'current':isPast?'past':'upcoming';
+      return `<div class="esc-row ${cls}"><div class="esc-time">${pad2(s)}:00 – ${pad2(s+d)}:00</div><div class="esc-name">${b.advisor}</div></div>`;
+    }).join('');
+  }
 }
 
 // ── REFRESH ───────────────────────────────────────────────────────────────────

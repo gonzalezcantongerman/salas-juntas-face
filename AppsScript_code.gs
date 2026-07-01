@@ -98,6 +98,34 @@ function getPuestosConfigSheet() {
   return s;
 }
 
+/** Corre una vez para agregar la columna limiteHorasEscenario a la hoja "Asesores". */
+function migrateAdvisorsEscenario() {
+  const s = getAdvisorsSheet();
+  const headers = s.getRange(1,1,1,s.getLastColumn()).getValues()[0];
+  if (headers.indexOf("limiteHorasEscenario") === -1) {
+    const col = s.getLastColumn() + 1;
+    s.getRange(1, col).setValue("limiteHorasEscenario").setFontWeight("bold");
+    const rows = s.getLastRow() - 1;
+    if (rows > 0) s.getRange(2, col, rows, 1).setValue(DEFAULT_WEEKLY_LIMIT);
+    Logger.log("Columna limiteHorasEscenario agregada a Asesores.");
+  } else {
+    Logger.log("La columna limiteHorasEscenario ya existe.");
+  }
+}
+
+/** Corre una vez para agregar la fila ESCENARIO a la hoja "Puestos de Trabajo". */
+function migrateEscenarioEntry() {
+  const s = getPuestosConfigSheet();
+  const data = s.getDataRange().getValues();
+  const ids = data.slice(1).map(r => String(r[0]).trim());
+  if (!ids.includes("ESCENARIO")) {
+    s.appendRow(["ESCENARIO", "Escenario", true, ""]);
+    Logger.log("Fila ESCENARIO agregada a Puestos de Trabajo.");
+  } else {
+    Logger.log("La fila ESCENARIO ya existe.");
+  }
+}
+
 /** Corre una vez para agregar la columna puestoFijo a la hoja "Puestos de Trabajo" si aún no existe. */
 function migratePuestosSheet() {
   const s = getPuestosConfigSheet();
@@ -129,7 +157,7 @@ function readAdvisors() {
   const s = getAdvisorsSheet();
   const data = s.getDataRange().getValues();
   const headers = data.shift();
-  const idx = buildIdx(headers, ["nombre","activo","esAdmin","limiteHorasSemanales","limiteHorasPuestoSemanales"]);
+  const idx = buildIdx(headers, ["nombre","activo","esAdmin","limiteHorasSemanales","limiteHorasPuestoSemanales","limiteHorasEscenario"]);
   return data
     .filter(row => String(row[idx.nombre]).trim() !== "")
     .map(row => ({
@@ -139,7 +167,9 @@ function readAdvisors() {
       limiteHoras:          idx.limiteHorasSemanales>=0 && Number(row[idx.limiteHorasSemanales])>0
                               ? Number(row[idx.limiteHorasSemanales]) : DEFAULT_WEEKLY_LIMIT,
       limiteHorasPuesto:    idx.limiteHorasPuestoSemanales>=0 && Number(row[idx.limiteHorasPuestoSemanales])>0
-                              ? Number(row[idx.limiteHorasPuestoSemanales]) : DEFAULT_WEEKLY_LIMIT
+                              ? Number(row[idx.limiteHorasPuestoSemanales]) : DEFAULT_WEEKLY_LIMIT,
+      limiteHorasEscenario: idx.limiteHorasEscenario>=0 && Number(row[idx.limiteHorasEscenario])>0
+                              ? Number(row[idx.limiteHorasEscenario]) : DEFAULT_WEEKLY_LIMIT
     }));
 }
 
@@ -470,13 +500,19 @@ function handleCreatePuesto(sheet, body) {
     if(!isAdmin(advisor, advisors) && advisorHasConcurrentBooking(advisor, date, newStart, duration, null))
       return jsonResponse({ok:false,message:"Ya tienes una reserva en ese horario. No puedes tener dos reservas simultáneas."});
 
+    const isEscenario = puesto === "ESCENARIO";
     const wS=weekStart(date),wE=weekEnd(wS);
     const used=data.reduce((s,r)=>{
       const rd=normalizeDate(r[idx.date]);
       if(normalizeName(r[idx.advisor])!==normalizeName(advisor)||rd<wS||rd>wE) return s;
+      // Contar solo el tipo correcto: escenario o puestos (separados)
+      if(isEscenario && r[idx.puesto]!=="ESCENARIO") return s;
+      if(!isEscenario && r[idx.puesto]==="ESCENARIO") return s;
       return s+Math.max(1,Number(r[idx.duration])||1);
     },0);
-    if(used+duration>rec.limiteHorasPuesto) return jsonResponse({ok:false,message:`Límite semanal de puestos de ${rec.limiteHorasPuesto}h alcanzado. Ya tienes ${used}h esta semana.`});
+    const limiteAplicable = isEscenario ? rec.limiteHorasEscenario : rec.limiteHorasPuesto;
+    const tipoLabel = isEscenario ? "escenario" : "puestos";
+    if(used+duration>limiteAplicable) return jsonResponse({ok:false,message:`Límite semanal de ${tipoLabel} (${limiteAplicable}h) alcanzado. Ya tienes ${used}h esta semana.`});
 
     const id=Utilities.getUuid(), newRow=sheet.getLastRow()+1;
     sheet.getRange(newRow,idx.time+1).setNumberFormat("@");
