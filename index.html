@@ -538,35 +538,52 @@ async function initAdvisors(){
   if(!LOCAL_MODE){
     try{
       const res = await fetch(`${API_URL}?action=advisors`);
-      if(res.ok) list = await res.json();
-    }catch(e){ /* usa fallback */ }
+      if(res.ok){
+        const parsed = await res.json();
+        // Solo aceptar si es un array válido con datos
+        if(Array.isArray(parsed) && parsed.length > 0) list = parsed;
+      }
+    }catch(e){
+      console.warn('initAdvisors: fetch falló, usando lista local.', e);
+    }
   }
-  if(!list || list.length === 0){
-    // fallback: construir estructura mínima desde la lista hardcodeada
-    list = ADVISORS_FALLBACK.map(n=>({nombre:n, activo:true, esAdmin:["Ferdinando Santiago Hoyos","Pablo Noriega Bello","Germán González Cantón"].includes(n), limiteHoras:999}));
+
+  // Fallback si no llegaron datos del backend
+  if(list.length === 0){
+    list = ADVISORS_FALLBACK.map(n=>({
+      nombre: n, activo: true,
+      esAdmin: ["Ferdinando Santiago Hoyos","Pablo Noriega Bello","Germán González Cantón"].includes(n),
+      limiteHoras: 999
+    }));
   }
+
   advisorsData = list;
 
+  const active = list
+    .filter(a => a.activo)
+    .sort((a,b) => a.nombre.localeCompare(b.nombre,'es'));
+
+  // Dropdown de login
   const sel = document.getElementById('advisorSelect');
-  // Limpiar opciones anteriores excepto el placeholder
-  while(sel.options.length > 1) sel.remove(1);
+  if(sel){
+    while(sel.options.length > 1) sel.remove(1);
+    active.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.nombre; opt.textContent = a.nombre;
+      sel.appendChild(opt);
+    });
+  }
 
-  const active = list.filter(a=>a.activo).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
-
-  active.forEach(a=>{
-    const opt = document.createElement('option');
-    opt.value = a.nombre; opt.textContent = a.nombre;
-    sel.appendChild(opt);
-  });
-
-  // Poblar filtro de asesor en Lista de Reservas
+  // Filtro de asesor en Lista de Reservas
   const advisorFilter = document.getElementById('advisorFilterVer');
-  while(advisorFilter.options.length > 1) advisorFilter.remove(1);
-  active.forEach(a=>{
-    const opt = document.createElement('option');
-    opt.value = a.nombre; opt.textContent = a.nombre;
-    advisorFilter.appendChild(opt);
-  });
+  if(advisorFilter){
+    while(advisorFilter.options.length > 1) advisorFilter.remove(1);
+    active.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.nombre; opt.textContent = a.nombre;
+      advisorFilter.appendChild(opt);
+    });
+  }
 }
 
 // Horario de operación: las 24 horas del día, slots de 1 hora (00:00 a 23:00).
