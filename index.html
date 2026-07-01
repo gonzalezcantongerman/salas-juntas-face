@@ -56,6 +56,29 @@
   header .brand .title span{
     display:block;font-weight:500;font-size:11px;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;
   }
+  /* Module switcher */
+  .mod-sw{position:relative;}
+  .mod-sw-btn{
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;
+    font-family:'Inter',sans-serif;font-size:14px;font-weight:600;
+    padding:8px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s;
+  }
+  .mod-sw-btn:hover{background:rgba(255,255,255,.2);}
+  .mod-sw-btn .arr{font-size:10px;transition:transform .2s;}
+  .mod-sw-btn.open .arr{transform:rotate(180deg);}
+  .mod-sw-menu{
+    position:absolute;top:calc(100% + 8px);left:0;min-width:200px;
+    background:#fff;border:1px solid #E3E6F0;border-radius:10px;
+    box-shadow:0 8px 24px rgba(43,54,115,.15);overflow:hidden;display:none;z-index:200;
+  }
+  .mod-sw-menu.open{display:block;}
+  .mod-sw-menu a{
+    display:flex;align-items:center;gap:10px;padding:11px 16px;
+    font-size:13px;font-weight:500;color:#111418;text-decoration:none;transition:background .12s;
+  }
+  .mod-sw-menu a:hover{background:#F4F6FB;}
+  .mod-sw-menu a.cur{background:#EEF1FB;color:#2B3673;font-weight:700;}
+  .mod-sw-menu a .bdg{font-size:10px;background:#3F4FA3;color:#fff;padding:2px 7px;border-radius:20px;margin-left:auto;}
   #userBox{display:flex;align-items:center;gap:12px;font-size:14px;}
   #userBox .name{font-weight:700;color:#fff;}
   #loggedAs{color:rgba(255,255,255,.85);font-size:13.5px;}
@@ -230,7 +253,13 @@
 <header>
   <div class="brand">
     <div class="logo-plate"><img src="assets/face-logo-color.png" alt="FACE Financial Advisors"></div>
-    <div class="title">Salas de Juntas<span>FACE Financial Advisors · CDMX</span></div>
+    <div class="mod-sw" id="modSw">
+      <button class="mod-sw-btn" id="modSwBtn" onclick="toggleModSw()">🏢 Salas de Juntas <span class="arr">▾</span></button>
+      <div class="mod-sw-menu" id="modSwMenu">
+        <a href="index.html" class="cur">🏢 Salas de Juntas <span class="bdg">aquí</span></a>
+        <a href="puestos.html">🗂 Puestos de Trabajo</a>
+      </div>
+    </div>
   </div>
   <div id="userBox">
     <button class="btn-reservar-header" id="reservarHeaderBtn" onclick="goReservar()">Reservar sala</button>
@@ -672,6 +701,19 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('advisorFilterVer').addEventListener('change', loadTable);
 
   loadCalendar();
+
+  // Handle ?sala=IPC/NASDAQ and ?tab=reservar from puestos.html links
+  const params = new URLSearchParams(location.search);
+  const tabParam  = params.get('tab');
+  const salaParam = params.get('sala');
+  if(tabParam==='reservar' && salaParam){
+    const roomSel = document.getElementById('roomSelectReservar');
+    if(roomSel && [...roomSel.options].some(o=>o.value===salaParam)){
+      roomSel.value = salaParam;
+    }
+    if(currentUser){ switchTab('reservar'); }
+    else { pendingTabAfterLogin = 'reservar'; openLoginModal(); }
+  }
 });
 
 function setLoggedInHeader(){
@@ -689,6 +731,18 @@ function goReservar(){
   }
   switchTab('reservar');
 }
+
+function toggleModSw(){
+  document.getElementById('modSwBtn').classList.toggle('open');
+  document.getElementById('modSwMenu').classList.toggle('open');
+}
+document.addEventListener('click', e=>{
+  const sw = document.getElementById('modSw');
+  if(sw && !sw.contains(e.target)){
+    document.getElementById('modSwBtn').classList.remove('open');
+    document.getElementById('modSwMenu').classList.remove('open');
+  }
+});
 
 function openLoginModal(){
   document.getElementById('loginModalOverlay').style.display = 'flex';

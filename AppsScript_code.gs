@@ -1,17 +1,25 @@
 /**
- * Backend de Reservas de Salas - FACE Financial Advisors
- * --------------------------------------------------------
- * GESTIÓN DE ASESORES (sin tocar el código):
- * - La pestaña "Asesores" se crea automáticamente con los 40 asesores iniciales.
- * - Desde ahí puedes: agregar/quitar asesores, activarlos/desactivarlos, definir admins
- *   y ajustar el límite de horas semanales por persona.
- * - Columnas de "Asesores": nombre | activo | esAdmin | limiteHorasSemanales
+ * Backend de Reservas - FACE Financial Advisors
+ * -----------------------------------------------
+ * Gestiona dos módulos:
+ *   • Salas de Juntas  → hojas "Reservas" y "Asesores"
+ *   • Puestos de Trabajo → hojas "ReservasPuestos" y "Puestos de Trabajo"
  *
- * Cada cambio a este código requiere una NUEVA versión en "Administrar implementaciones".
+ * GESTIÓN SIN CÓDIGO:
+ *   - "Asesores"         → activar/desactivar, admins, límite horas salas y puestos
+ *   - "Puestos de Trabajo" → marcar disponible TRUE/FALSE por puesto
+ *
+ * Cada cambio requiere Nueva Versión en Administrar Implementaciones.
  */
 
-const SHEET_NAME = "Reservas";
-const ADVISORS_SHEET_NAME = "Asesores";
+// ─── Constantes ───────────────────────────────────────────────────────────────
+const SHEET_NAME               = "Reservas";
+const ADVISORS_SHEET_NAME      = "Asesores";
+const PUESTOS_CONFIG_SHEET     = "Puestos de Trabajo";
+const RESERVAS_PUESTOS_SHEET   = "ReservasPuestos";
+
+const DEFAULT_ADMINS       = ["Ferdinando Santiago Hoyos","Pablo Noriega Bello","Germán González Cantón"];
+const DEFAULT_WEEKLY_LIMIT = 999;
 
 const DEFAULT_ADVISORS = [
   "Alejandro Argüelles Gonzalez","Alejandro Martinez Romero","Alejandro Sánchez Barbara",
@@ -30,58 +38,114 @@ const DEFAULT_ADVISORS = [
   "Pablo Noriega Bello","Paula Yolanda Diaz Herrera","Ramón Alejandro González Vega",
   "Sofia Mejorada Perez Verdia"
 ];
-const DEFAULT_ADMINS = ["Ferdinando Santiago Hoyos", "Pablo Noriega Bello", "Germán González Cantón"];
-const DEFAULT_WEEKLY_LIMIT = 999;
 
 // ─── Helpers de hojas ────────────────────────────────────────────────────────
 
 function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow(["id", "room", "date", "time", "duration", "advisor", "createdAt"]);
+  let s = ss.getSheetByName(SHEET_NAME);
+  if (!s) {
+    s = ss.insertSheet(SHEET_NAME);
+    s.appendRow(["id","room","date","time","duration","advisor","createdAt"]);
   }
-  return sheet;
+  return s;
 }
 
 function getAdvisorsSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(ADVISORS_SHEET_NAME);
-  if (!sheet) {
-    sheet = ss.insertSheet(ADVISORS_SHEET_NAME);
-    sheet.appendRow(["nombre", "activo", "esAdmin", "limiteHorasSemanales"]);
+  let s = ss.getSheetByName(ADVISORS_SHEET_NAME);
+  if (!s) {
+    s = ss.insertSheet(ADVISORS_SHEET_NAME);
+    s.appendRow(["nombre","activo","esAdmin","limiteHorasSemanales","limiteHorasPuestoSemanales"]);
     DEFAULT_ADVISORS.forEach(name => {
-      const admin = DEFAULT_ADMINS.indexOf(name) !== -1;
-      sheet.appendRow([name, true, admin, DEFAULT_WEEKLY_LIMIT]);
+      s.appendRow([name, true, DEFAULT_ADMINS.indexOf(name)!==-1, DEFAULT_WEEKLY_LIMIT, DEFAULT_WEEKLY_LIMIT]);
     });
-    sheet.getRange(1, 1, 1, 4).setFontWeight("bold");
-    sheet.setFrozenRows(1);
+    s.getRange(1,1,1,5).setFontWeight("bold");
+    s.setFrozenRows(1);
   }
-  return sheet;
+  return s;
 }
 
+/** Corre una vez para agregar la columna limiteHorasPuestoSemanales si aún no existe. */
+function migrateAdvisorsSheet() {
+  const s = getAdvisorsSheet();
+  const headers = s.getRange(1,1,1,s.getLastColumn()).getValues()[0];
+  if (headers.indexOf("limiteHorasPuestoSemanales") === -1) {
+    const col = s.getLastColumn() + 1;
+    s.getRange(1, col).setValue("limiteHorasPuestoSemanales").setFontWeight("bold");
+    const rows = s.getLastRow() - 1;
+    if (rows > 0) {
+      s.getRange(2, col, rows, 1).setValue(DEFAULT_WEEKLY_LIMIT);
+    }
+    Logger.log("Columna limiteHorasPuestoSemanales agregada.");
+  } else {
+    Logger.log("La columna ya existe, nada que hacer.");
+  }
+}
+
+function getPuestosConfigSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let s = ss.getSheetByName(PUESTOS_CONFIG_SHEET);
+  if (!s) {
+    s = ss.insertSheet(PUESTOS_CONFIG_SHEET);
+    s.appendRow(["id","nombre","disponible"]);
+    for (let i = 1; i <= 16; i++) {
+      s.appendRow(["P"+i, "Puesto #"+i, i !== 1]); // #1 starts as false
+    }
+    s.getRange(1,1,1,3).setFontWeight("bold");
+    s.setFrozenRows(1);
+  }
+  return s;
+}
+
+function getReservasPuestosSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let s = ss.getSheetByName(RESERVAS_PUESTOS_SHEET);
+  if (!s) {
+    s = ss.insertSheet(RESERVAS_PUESTOS_SHEET);
+    s.appendRow(["id","puesto","date","time","duration","advisor","createdAt"]);
+    s.getRange(1,1,1,7).setFontWeight("bold");
+    s.setFrozenRows(1);
+  }
+  return s;
+}
+
+// ─── Lectura de configuración ────────────────────────────────────────────────
+
 function readAdvisors() {
-  const sheet = getAdvisorsSheet();
-  const data = sheet.getDataRange().getValues();
+  const s = getAdvisorsSheet();
+  const data = s.getDataRange().getValues();
   const headers = data.shift();
-  const idx = {
-    nombre:     headers.indexOf("nombre"),
-    activo:     headers.indexOf("activo"),
-    esAdmin:    headers.indexOf("esAdmin"),
-    limiteHoras: headers.indexOf("limiteHorasSemanales")
-  };
+  const idx = buildIdx(headers, ["nombre","activo","esAdmin","limiteHorasSemanales","limiteHorasPuestoSemanales"]);
   return data
     .filter(row => String(row[idx.nombre]).trim() !== "")
     .map(row => ({
-      nombre:      String(row[idx.nombre]).trim(),
-      activo:      row[idx.activo] === true  || String(row[idx.activo]).toLowerCase()  === "true",
-      esAdmin:     row[idx.esAdmin] === true || String(row[idx.esAdmin]).toLowerCase() === "true",
-      limiteHoras: Number(row[idx.limiteHoras]) > 0 ? Number(row[idx.limiteHoras]) : DEFAULT_WEEKLY_LIMIT
+      nombre:               String(row[idx.nombre]).trim(),
+      activo:               row[idx.activo]===true  || String(row[idx.activo]).toLowerCase()==="true",
+      esAdmin:              row[idx.esAdmin]===true || String(row[idx.esAdmin]).toLowerCase()==="true",
+      limiteHoras:          idx.limiteHorasSemanales>=0 && Number(row[idx.limiteHorasSemanales])>0
+                              ? Number(row[idx.limiteHorasSemanales]) : DEFAULT_WEEKLY_LIMIT,
+      limiteHorasPuesto:    idx.limiteHorasPuestoSemanales>=0 && Number(row[idx.limiteHorasPuestoSemanales])>0
+                              ? Number(row[idx.limiteHorasPuestoSemanales]) : DEFAULT_WEEKLY_LIMIT
     }));
 }
 
-/** Quita acentos y pasa a minúsculas para comparar nombres sin importar tildes. */
+function readPuestosConfig() {
+  const s = getPuestosConfigSheet();
+  const data = s.getDataRange().getValues();
+  const headers = data.shift();
+  const idx = buildIdx(headers, ["id","nombre","disponible"]);
+  return data
+    .filter(row => String(row[idx.id]).trim() !== "")
+    .map(row => ({
+      id:         String(row[idx.id]).trim(),
+      nombre:     String(row[idx.nombre]).trim(),
+      disponible: row[idx.disponible]===true || String(row[idx.disponible]).toLowerCase()==="true"
+    }));
+}
+
+// ─── Normalización de nombres ─────────────────────────────────────────────────
+
 function normalizeName(s) {
   return String(s).trim().toLowerCase()
     .replace(/[áàäâ]/g,'a').replace(/[éèëê]/g,'e')
@@ -103,274 +167,300 @@ function isAdmin(name, advisors) {
 
 function doGet(e) {
   const action = e.parameter.action;
+  const date   = e.parameter.date;
 
-  if (action === "advisors") {
-    return jsonResponse(readAdvisors());
+  // Catálogo de asesores
+  if (action === "advisors") return jsonResponse(readAdvisors());
+
+  // Configuración de puestos
+  if (action === "puestos") return jsonResponse(readPuestosConfig());
+
+  // Reservas de puestos de trabajo
+  if (action === "reservasPuestos") {
+    const s = getReservasPuestosSheet();
+    const data = s.getDataRange().getValues();
+    const headers = data.shift();
+    const idx = buildIdx(headers, ["id","puesto","date","time","duration","advisor"]);
+    const rows = data
+      .filter(r => r[idx.id] !== "" && (!date || normalizeDate(r[idx.date])===date))
+      .map(r => ({
+        id:       r[idx.id],
+        puesto:   r[idx.puesto],
+        date:     normalizeDate(r[idx.date]),
+        time:     normalizeTime(r[idx.time]),
+        duration: Number(r[idx.duration])||1,
+        advisor:  r[idx.advisor]
+      }));
+    return jsonResponse(rows);
   }
 
-  const date = e.parameter.date;
-  const sheet = getSheet();
-  const data = sheet.getDataRange().getValues();
+  // Reservas de salas (con o sin filtro de fecha)
+  const s = getSheet();
+  const data = s.getDataRange().getValues();
   const headers = data.shift();
   const idx = buildIdx(headers, ["id","room","date","time","duration","advisor"]);
-
-  const results = data
-    .filter(row => row[idx.id] !== "" && (!date || normalizeDate(row[idx.date]) === date))
-    .map(row => ({
-      id:       row[idx.id],
-      room:     row[idx.room],
-      date:     normalizeDate(row[idx.date]),
-      time:     normalizeTime(row[idx.time]),
-      duration: Number(row[idx.duration]) || 1,
-      advisor:  row[idx.advisor]
+  const rows = data
+    .filter(r => r[idx.id] !== "" && (!date || normalizeDate(r[idx.date])===date))
+    .map(r => ({
+      id:       r[idx.id],
+      room:     r[idx.room],
+      date:     normalizeDate(r[idx.date]),
+      time:     normalizeTime(r[idx.time]),
+      duration: Number(r[idx.duration])||1,
+      advisor:  r[idx.advisor]
     }));
-
-  return jsonResponse(results);
+  return jsonResponse(rows);
 }
 
 function doPost(e) {
   const body = JSON.parse(e.postData.contents);
-  const sheet = getSheet();
-  if (body.action === "create") return handleCreate(sheet, body);
-  if (body.action === "edit")   return handleEdit(sheet, body);
-  if (body.action === "cancel") return handleCancel(sheet, body);
-  return jsonResponse({ ok: false, message: "Acción no reconocida." });
+
+  if (body.action === "create")        return handleCreate(getSheet(), body);
+  if (body.action === "edit")          return handleEdit(getSheet(), body);
+  if (body.action === "cancel")        return handleCancel(getSheet(), body);
+  if (body.action === "createPuesto")  return handleCreatePuesto(getReservasPuestosSheet(), body);
+  if (body.action === "editPuesto")    return handleEditPuesto(getReservasPuestosSheet(), body);
+  if (body.action === "cancelPuesto")  return handleCancelPuesto(getReservasPuestosSheet(), body);
+
+  return jsonResponse({ ok:false, message:"Acción no reconocida." });
 }
 
-// ─── Lógica de reservas ──────────────────────────────────────────────────────
+// ─── Lógica Salas ─────────────────────────────────────────────────────────────
 
 function handleCreate(sheet, body) {
   const { room, date, time, advisor } = body;
-  const duration = Math.max(1, parseInt(body.duration || 1, 10));
-  if (!room || !date || !time || !advisor) {
-    return jsonResponse({ ok: false, message: "Faltan datos para la reserva." });
-  }
+  const duration = Math.max(1, parseInt(body.duration||1,10));
+  if (!room||!date||!time||!advisor) return jsonResponse({ok:false,message:"Faltan datos."});
 
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const advisors = readAdvisors();
-
-    // Verificar que el asesor exista y esté activo
     const rec = findAdvisor(advisor, advisors);
-    if (!rec) {
-      return jsonResponse({ ok: false, message: "Asesor no encontrado en el directorio. Contacta a un administrador." });
-    }
-    if (!rec.activo) {
-      return jsonResponse({ ok: false, message: "Tu cuenta está desactivada. Contacta a un administrador." });
-    }
+    if (!rec)       return jsonResponse({ok:false,message:"Asesor no encontrado. Contacta a un administrador."});
+    if (!rec.activo) return jsonResponse({ok:false,message:"Tu cuenta está desactivada."});
 
-    const data = sheet.getDataRange().getValues();
-    const headers = data.shift();
-    const idx = buildIdx(headers, ["room","date","time","duration","advisor"]);
+    const data = sheet.getDataRange().getValues(); const headers = data.shift();
+    const idx = buildIdx(headers,["room","date","time","duration","advisor"]);
 
-    // Verificar conflicto de horario
     const newStart = startHour(time);
-    const conflict = data.some(row => {
-      if (row[idx.room] !== room || normalizeDate(row[idx.date]) !== date) return false;
-      const s = startHour(row[idx.time]);
-      const sp = Math.max(1, Number(row[idx.duration]) || 1);
-      return rangesOverlap(newStart, newStart + duration, s, s + sp);
+    const conflict = data.some(r => {
+      if (r[idx.room]!==room || normalizeDate(r[idx.date])!==date) return false;
+      return rangesOverlap(newStart,newStart+duration,startHour(r[idx.time]),startHour(r[idx.time])+(Math.max(1,Number(r[idx.duration])||1)));
     });
-    if (conflict) {
-      return jsonResponse({ ok: false, message: "Ese horario se cruza con otra reserva ya existente." });
-    }
+    if (conflict) return jsonResponse({ok:false,message:"Ese horario se cruza con otra reserva existente."});
 
-    // Verificar límite semanal de horas
-    const wStart = weekStart(date);
-    const wEnd   = weekEnd(wStart);
-    const usedHours = data.reduce((sum, row) => {
-      const rd = normalizeDate(row[idx.date]);
-      if (normalizeName(row[idx.advisor]) !== normalizeName(advisor) || rd < wStart || rd > wEnd) return sum;
-      return sum + Math.max(1, Number(row[idx.duration]) || 1);
-    }, 0);
+    const wStart=weekStart(date), wEnd=weekEnd(wStart);
+    const used = data.reduce((s,r)=>{
+      const rd=normalizeDate(r[idx.date]);
+      if (normalizeName(r[idx.advisor])!==normalizeName(advisor)||rd<wStart||rd>wEnd) return s;
+      return s+Math.max(1,Number(r[idx.duration])||1);
+    },0);
+    if (used+duration>rec.limiteHoras) return jsonResponse({ok:false,message:`Límite semanal de ${rec.limiteHoras}h alcanzado. Ya tienes ${used}h esta semana. Contacta al área directiva.`});
 
-    if (usedHours + duration > rec.limiteHoras) {
-      return jsonResponse({
-        ok: false,
-        message: `Has alcanzado tu límite semanal de ${rec.limiteHoras} hora(s). Ya tienes ${usedHours}h reservadas esta semana. Contacta al área directiva para que te asignen más horas.`
-      });
-    }
-
-    // Guardar reserva
-    const id = Utilities.getUuid();
-    const newRow = sheet.getLastRow() + 1;
-    sheet.getRange(newRow, idx.time + 1).setNumberFormat("@");
-    sheet.getRange(newRow, 1, 1, 7).setValues([[id, room, date, time, duration, advisor, new Date()]]);
-    return jsonResponse({ ok: true, id });
-  } finally {
-    lock.releaseLock();
-  }
+    const id=Utilities.getUuid(), newRow=sheet.getLastRow()+1;
+    sheet.getRange(newRow,idx.time+1).setNumberFormat("@");
+    sheet.getRange(newRow,1,1,7).setValues([[id,room,date,time,duration,advisor,new Date()]]);
+    return jsonResponse({ok:true,id});
+  } finally { lock.releaseLock(); }
 }
 
 function handleEdit(sheet, body) {
-  const { id, advisor } = body;
-  const newDuration = Math.max(1, parseInt(body.duration || 1, 10));
-  if (!id) return jsonResponse({ ok: false, message: "Falta el id de la reserva." });
+  const {id,advisor} = body;
+  const newDuration = Math.max(1,parseInt(body.duration||1,10));
+  if (!id) return jsonResponse({ok:false,message:"Falta el id."});
 
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+  const lock=LockService.getScriptLock(); lock.waitLock(10000);
   try {
-    const advisors = readAdvisors();
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    const idx = buildIdx(headers, ["id","room","date","time","duration","advisor"]);
+    const advisors=readAdvisors();
+    const data=sheet.getDataRange().getValues(); const headers=data[0];
+    const idx=buildIdx(headers,["id","room","date","time","duration","advisor"]);
 
-    let rowIndex = -1;
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][idx.id] === id) { rowIndex = i; break; }
-    }
-    if (rowIndex === -1) return jsonResponse({ ok: false, message: "No se encontró la reserva." });
+    let ri=-1;
+    for(let i=1;i<data.length;i++){if(data[i][idx.id]===id){ri=i;break;}}
+    if(ri===-1) return jsonResponse({ok:false,message:"Reserva no encontrada."});
 
-    const isOwner = data[rowIndex][idx.advisor] === advisor;
-    const admin   = isAdmin(advisor, advisors);
-    if (!isOwner && !admin) {
-      return jsonResponse({ ok: false, message: "Solo puedes editar tus propias reservas." });
-    }
+    if(data[ri][idx.advisor]!==advisor && !isAdmin(advisor,advisors))
+      return jsonResponse({ok:false,message:"Solo puedes editar tus propias reservas."});
 
-    // Bloquear edición de reservas pasadas (nadie puede modificar, ni admins)
-    const bookingDate = normalizeDate(data[rowIndex][idx.date]);
-    const bookingHour = startHour(data[rowIndex][idx.time]);
-    const bookingDateTime = new Date(bookingDate + "T" + String(bookingHour).padStart(2, "0") + ":00:00");
-    if (bookingDateTime < new Date()) {
-      return jsonResponse({ ok: false, message: "No se puede editar una reserva que ya ocurrió." });
-    }
+    const bDate=normalizeDate(data[ri][idx.date]);
+    const bHour=startHour(data[ri][idx.time]);
+    if(new Date(bDate+"T"+String(bHour).padStart(2,"0")+":00:00")<new Date())
+      return jsonResponse({ok:false,message:"No se puede editar una reserva que ya ocurrió."});
 
-    const room  = data[rowIndex][idx.room];
-    const date  = normalizeDate(data[rowIndex][idx.date]);
-    const start = startHour(data[rowIndex][idx.time]);
-
-    // Conflicto de horario excluyendo la fila actual
-    const conflict = data.some((row, i) => {
-      if (i === rowIndex || i === 0) return false;
-      if (row[idx.room] !== room || normalizeDate(row[idx.date]) !== date) return false;
-      const s  = startHour(row[idx.time]);
-      const sp = Math.max(1, Number(row[idx.duration]) || 1);
-      return rangesOverlap(start, start + newDuration, s, s + sp);
+    const room=data[ri][idx.room], date=bDate, start=bHour;
+    const conflict=data.some((r,i)=>{
+      if(i===ri||i===0||r[idx.room]!==room||normalizeDate(r[idx.date])!==date) return false;
+      const s=startHour(r[idx.time]),sp=Math.max(1,Number(r[idx.duration])||1);
+      return rangesOverlap(start,start+newDuration,s,s+sp);
     });
-    if (conflict) {
-      return jsonResponse({ ok: false, message: "La nueva duración se cruza con otra reserva." });
-    }
+    if(conflict) return jsonResponse({ok:false,message:"La nueva duración se cruza con otra reserva."});
 
-    // Límite semanal (excluyendo la reserva que se edita)
-    const bookingAdvisor = data[rowIndex][idx.advisor];
-    const rec = findAdvisor(bookingAdvisor, advisors);
-    if (rec) {
-      const wStart = weekStart(date);
-      const wEnd   = weekEnd(wStart);
-      const usedHours = data.reduce((sum, row, i) => {
-        if (i === 0 || i === rowIndex) return sum;
-        const rd = normalizeDate(row[idx.date]);
-        if (normalizeName(row[idx.advisor]) !== normalizeName(bookingAdvisor) || rd < wStart || rd > wEnd) return sum;
-        return sum + Math.max(1, Number(row[idx.duration]) || 1);
-      }, 0);
-      if (usedHours + newDuration > rec.limiteHoras) {
-        return jsonResponse({
-          ok: false,
-          message: `La nueva duración superaría tu límite semanal de ${rec.limiteHoras}h. Contacta al área directiva para solicitar más horas.`
-        });
-      }
+    const ba=data[ri][idx.advisor], rec=findAdvisor(ba,advisors);
+    if(rec){
+      const wS=weekStart(date),wE=weekEnd(wS);
+      const used=data.reduce((s,r,i)=>{
+        if(i===0||i===ri) return s;
+        const rd=normalizeDate(r[idx.date]);
+        if(normalizeName(r[idx.advisor])!==normalizeName(ba)||rd<wS||rd>wE) return s;
+        return s+Math.max(1,Number(r[idx.duration])||1);
+      },0);
+      if(used+newDuration>rec.limiteHoras) return jsonResponse({ok:false,message:`Supera el límite semanal de ${rec.limiteHoras}h.`});
     }
-
-    sheet.getRange(rowIndex + 1, idx.duration + 1).setValue(newDuration);
-    return jsonResponse({ ok: true });
-  } finally {
-    lock.releaseLock();
-  }
+    sheet.getRange(ri+1,idx.duration+1).setValue(newDuration);
+    return jsonResponse({ok:true});
+  } finally { lock.releaseLock(); }
 }
 
 function handleCancel(sheet, body) {
-  const { id, advisor } = body;
-  if (!id) return jsonResponse({ ok: false, message: "Falta el id de la reserva." });
+  const {id,advisor}=body;
+  if(!id) return jsonResponse({ok:false,message:"Falta el id."});
+  const advisors=readAdvisors();
+  const data=sheet.getDataRange().getValues(), headers=data[0];
+  const idx=buildIdx(headers,["id","date","time","advisor"]);
 
-  const advisors = readAdvisors();
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const idx = buildIdx(headers, ["id","room","date","time","duration","advisor"]);
-
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][idx.id] !== id) continue;
-
-    const isOwner = data[i][idx.advisor] === advisor;
-    const admin   = isAdmin(advisor, advisors);
-    if (!isOwner && !admin) {
-      return jsonResponse({ ok: false, message: "Solo puedes cancelar tus propias reservas." });
+  for(let i=1;i<data.length;i++){
+    if(data[i][idx.id]!==id) continue;
+    if(data[i][idx.advisor]!==advisor && !isAdmin(advisor,advisors))
+      return jsonResponse({ok:false,message:"Solo puedes cancelar tus propias reservas."});
+    if(!isAdmin(advisor,advisors)){
+      const dt=new Date(normalizeDate(data[i][idx.date])+"T"+String(startHour(data[i][idx.time])).padStart(2,"0")+":00:00");
+      if((dt-new Date())<2*60*60*1000) return jsonResponse({ok:false,message:"No puedes cancelar con menos de 2h de anticipación."});
     }
-
-    // Bloqueo de cancelación con menos de 2 horas de anticipación (solo para no-admins)
-    if (!admin) {
-      const bookingDate = normalizeDate(data[i][idx.date]);
-      const bookingHour = startHour(data[i][idx.time]);
-      const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
-      const nowStr = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd HH");
-      const bookingStr = bookingDate + " " + String(bookingHour).padStart(2, "0");
-
-      // Comparar diferencia en horas
-      const nowDate = new Date();
-      const bookingDateTime = new Date(bookingDate + "T" + String(bookingHour).padStart(2, "0") + ":00:00");
-      const diffMs = bookingDateTime.getTime() - nowDate.getTime();
-      const diffHours = diffMs / (1000 * 60 * 60);
-
-      if (diffHours < 2) {
-        return jsonResponse({
-          ok: false,
-          message: "No puedes cancelar una reserva con menos de 2 horas de anticipación. Las horas siguen contando para tu semana."
-        });
-      }
-    }
-
-    sheet.deleteRow(i + 1);
-    return jsonResponse({ ok: true });
+    sheet.deleteRow(i+1);
+    return jsonResponse({ok:true});
   }
-  return jsonResponse({ ok: false, message: "No se encontró la reserva." });
+  return jsonResponse({ok:false,message:"Reserva no encontrada."});
+}
+
+// ─── Lógica Puestos de Trabajo ────────────────────────────────────────────────
+
+function handleCreatePuesto(sheet, body) {
+  const {puesto, date, time, advisor} = body;
+  const duration = Math.max(1,parseInt(body.duration||1,10));
+  if (!puesto||!date||!time||!advisor) return jsonResponse({ok:false,message:"Faltan datos."});
+
+  // Verificar que el puesto esté disponible en la config
+  const pConfig = readPuestosConfig();
+  const pc = pConfig.find(p=>p.id===puesto);
+  if (!pc||!pc.disponible) return jsonResponse({ok:false,message:"Este puesto no está disponible."});
+
+  const lock=LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const advisors=readAdvisors();
+    const rec=findAdvisor(advisor,advisors);
+    if(!rec)       return jsonResponse({ok:false,message:"Asesor no encontrado."});
+    if(!rec.activo) return jsonResponse({ok:false,message:"Tu cuenta está desactivada."});
+
+    const data=sheet.getDataRange().getValues(); const headers=data.shift();
+    const idx=buildIdx(headers,["puesto","date","time","duration","advisor"]);
+
+    const newStart=startHour(time);
+    const conflict=data.some(r=>{
+      if(r[idx.puesto]!==puesto||normalizeDate(r[idx.date])!==date) return false;
+      return rangesOverlap(newStart,newStart+duration,startHour(r[idx.time]),startHour(r[idx.time])+Math.max(1,Number(r[idx.duration])||1));
+    });
+    if(conflict) return jsonResponse({ok:false,message:"Ese horario ya está ocupado en este puesto."});
+
+    const wS=weekStart(date),wE=weekEnd(wS);
+    const used=data.reduce((s,r)=>{
+      const rd=normalizeDate(r[idx.date]);
+      if(normalizeName(r[idx.advisor])!==normalizeName(advisor)||rd<wS||rd>wE) return s;
+      return s+Math.max(1,Number(r[idx.duration])||1);
+    },0);
+    if(used+duration>rec.limiteHorasPuesto) return jsonResponse({ok:false,message:`Límite semanal de puestos de ${rec.limiteHorasPuesto}h alcanzado. Ya tienes ${used}h esta semana.`});
+
+    const id=Utilities.getUuid(), newRow=sheet.getLastRow()+1;
+    sheet.getRange(newRow,idx.time+1).setNumberFormat("@");
+    sheet.getRange(newRow,1,1,7).setValues([[id,puesto,date,time,duration,advisor,new Date()]]);
+    return jsonResponse({ok:true,id});
+  } finally { lock.releaseLock(); }
+}
+
+function handleEditPuesto(sheet, body) {
+  const {id,advisor}=body;
+  const newDuration=Math.max(1,parseInt(body.duration||1,10));
+  if(!id) return jsonResponse({ok:false,message:"Falta el id."});
+
+  const lock=LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const advisors=readAdvisors();
+    const data=sheet.getDataRange().getValues(), headers=data[0];
+    const idx=buildIdx(headers,["id","puesto","date","time","duration","advisor"]);
+
+    let ri=-1;
+    for(let i=1;i<data.length;i++){if(data[i][idx.id]===id){ri=i;break;}}
+    if(ri===-1) return jsonResponse({ok:false,message:"Reserva no encontrada."});
+    if(data[ri][idx.advisor]!==advisor&&!isAdmin(advisor,advisors))
+      return jsonResponse({ok:false,message:"Solo puedes editar tus propias reservas."});
+
+    const bDate=normalizeDate(data[ri][idx.date]), bHour=startHour(data[ri][idx.time]);
+    if(new Date(bDate+"T"+String(bHour).padStart(2,"0")+":00:00")<new Date())
+      return jsonResponse({ok:false,message:"No se puede editar una reserva que ya ocurrió."});
+
+    const puesto=data[ri][idx.puesto];
+    const conflict=data.some((r,i)=>{
+      if(i===ri||i===0||r[idx.puesto]!==puesto||normalizeDate(r[idx.date])!==bDate) return false;
+      const s=startHour(r[idx.time]),sp=Math.max(1,Number(r[idx.duration])||1);
+      return rangesOverlap(bHour,bHour+newDuration,s,s+sp);
+    });
+    if(conflict) return jsonResponse({ok:false,message:"La nueva duración se cruza con otra reserva."});
+
+    sheet.getRange(ri+1,idx.duration+1).setValue(newDuration);
+    return jsonResponse({ok:true});
+  } finally { lock.releaseLock(); }
+}
+
+function handleCancelPuesto(sheet, body) {
+  const {id,advisor}=body;
+  if(!id) return jsonResponse({ok:false,message:"Falta el id."});
+  const advisors=readAdvisors();
+  const data=sheet.getDataRange().getValues(), headers=data[0];
+  const idx=buildIdx(headers,["id","date","time","advisor"]);
+
+  for(let i=1;i<data.length;i++){
+    if(data[i][idx.id]!==id) continue;
+    if(data[i][idx.advisor]!==advisor&&!isAdmin(advisor,advisors))
+      return jsonResponse({ok:false,message:"Solo puedes cancelar tus propias reservas."});
+    if(!isAdmin(advisor,advisors)){
+      const dt=new Date(normalizeDate(data[i][idx.date])+"T"+String(startHour(data[i][idx.time])).padStart(2,"0")+":00:00");
+      if((dt-new Date())<2*60*60*1000) return jsonResponse({ok:false,message:"No puedes cancelar con menos de 2h de anticipación."});
+    }
+    sheet.deleteRow(i+1);
+    return jsonResponse({ok:true});
+  }
+  return jsonResponse({ok:false,message:"Reserva no encontrada."});
 }
 
 // ─── Utilidades ──────────────────────────────────────────────────────────────
 
 function buildIdx(headers, keys) {
-  const idx = {};
-  keys.forEach(k => { idx[k] = headers.indexOf(k); });
+  const idx={};
+  keys.forEach(k=>{ idx[k]=headers.indexOf(k); });
   return idx;
 }
-
-function rangesOverlap(aStart, aEnd, bStart, bEnd) {
-  return aStart < bEnd && bStart < aEnd;
+function rangesOverlap(aS,aE,bS,bE){ return aS<bE&&bS<aE; }
+function weekStart(dateStr){
+  const d=new Date(dateStr+"T12:00:00Z"), day=d.getUTCDay();
+  d.setUTCDate(d.getUTCDate()+(day===0?-6:1-day));
+  return d.toISOString().slice(0,10);
 }
-
-function weekStart(dateStr) {
-  const d = new Date(dateStr + "T12:00:00Z");
-  const day = d.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setUTCDate(d.getUTCDate() + diff);
-  return d.toISOString().slice(0, 10);
+function weekEnd(wS){
+  const d=new Date(wS+"T12:00:00Z");
+  d.setUTCDate(d.getUTCDate()+6);
+  return d.toISOString().slice(0,10);
 }
-
-function weekEnd(weekStartStr) {
-  const d = new Date(weekStartStr + "T12:00:00Z");
-  d.setUTCDate(d.getUTCDate() + 6);
-  return d.toISOString().slice(0, 10);
-}
-
-function normalizeTime(value) {
-  if (value instanceof Date) {
-    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
-    return Utilities.formatDate(value, tz, "HH") + ":00";
+function normalizeTime(v){
+  if(v instanceof Date){
+    const tz=SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    return Utilities.formatDate(v,tz,"HH")+":00";
   }
-  return String(value);
+  return String(v);
 }
-
-function startHour(value) {
-  return parseInt(normalizeTime(value).split(":")[0], 10);
+function startHour(v){ return parseInt(normalizeTime(v).split(":")[0],10); }
+function normalizeDate(v){
+  if(v instanceof Date) return Utilities.formatDate(v,Session.getScriptTimeZone(),"yyyy-MM-dd");
+  return String(v);
 }
-
-function normalizeDate(value) {
-  if (value instanceof Date) {
-    return Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd");
-  }
-  return String(value);
-}
-
-function jsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+function jsonResponse(obj){
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
