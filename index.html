@@ -457,22 +457,36 @@ function getAdvisorLimit(name){
   return rec ? (rec.limiteHoras || 999) : 999;
 }
 
-/** Horas reservadas por el asesor en la semana que contiene `dateStr` (YYYY-MM-DD),
- *  usando todas las fuentes de caché disponibles. */
-function getWeeklyUsed(advisor, dateStr){
+// Caché de semana para no llamar al API en cada cambio de selector
+let _weekUsageCache = { wStart: null, data: [] };
+
+/** Horas reservadas por el asesor en la semana que contiene `dateStr`.
+ *  Siempre consulta el API (con caché por semana) para tener el dato exacto. */
+async function getWeeklyUsed(advisor, dateStr){
   const d = new Date((dateStr||todayStr()) + 'T12:00:00');
   const day = d.getDay();
   const diff = day===0 ? -6 : 1-day;
   const monday = new Date(d); monday.setDate(d.getDate()+diff);
-  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
   const wStart = toDateStr(monday);
-  const wEnd   = toDateStr(sunday);
 
-  const all = [...(weekBookingsCache||[]), ...(bookingsCache||[]), ...(window.__verBookingsCache||[])];
+  // Solo va al API si la semana cambió
+  if(_weekUsageCache.wStart !== wStart){
+    const days = Array.from({length:7}, (_,i)=>{
+      const dd = new Date(monday); dd.setDate(monday.getDate()+i); return toDateStr(dd);
+    });
+    try{
+      const results = await Promise.all(days.map(d=>apiGet(d)));
+      _weekUsageCache = { wStart, data: results.flat() };
+    }catch(e){
+      // Si falla el API, usa el caché de calendario como respaldo
+      _weekUsageCache = { wStart, data: [...(weekBookingsCache||[])] };
+    }
+  }
+
   const seen = new Set();
-  return all.reduce((sum, b)=>{
+  return _weekUsageCache.data.reduce((sum, b)=>{
     if(seen.has(b.id)) return sum;
-    if(b.advisor!==advisor || b.date<wStart || b.date>wEnd) return sum;
+    if(b.advisor!==advisor) return sum;
     seen.add(b.id);
     return sum + Math.max(1, b.duration||1);
   }, 0);
@@ -511,11 +525,11 @@ function canEditBooking(booking, user){
   return owner || admin;
 }
 
-function updateWeeklyUsageBar(date){
+async function updateWeeklyUsageBar(date){
   const bar = document.getElementById('weeklyUsageBar');
   if(!currentUser){ bar.style.display='none'; return; }
   const limit = getAdvisorLimit(currentUser);
-  const used  = getWeeklyUsed(currentUser, date||todayStr());
+  const used  = await getWeeklyUsed(currentUser, date||todayStr());
   const pct   = Math.min(100, Math.round(used/limit*100));
   const over  = used>=limit;
   const color = over ? 'var(--red)' : used/limit>=0.8 ? '#D97706' : 'var(--green)';
@@ -1104,6 +1118,7 @@ async function confirmBooking(){
     if(res.ok){
       showToast('Reserva confirmada ✓');
       selection = {room:null, time:null, duration:null};
+      _weekUsageCache.wStart = null; // forzar recarga del contador semanal
       await loadSlots();
     } else {
       showToast(res.message || 'Ese horario ya fue tomado, elige otro.', true);
@@ -1199,6 +1214,7 @@ async function cancelBooking(id, ownerName){
     const res = await apiPost({action:'cancel', id: id, advisor: currentUser});
     if(res.ok){
       showToast('Reserva cancelada.');
+      _weekUsageCache.wStart = null; // forzar recarga del contador semanal
       loadTable();
       loadSlots();
       loadCalendar();
