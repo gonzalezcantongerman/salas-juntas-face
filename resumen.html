@@ -2,403 +2,269 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resumen de Hoy · FACE Salas de Juntas</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FACE – Resumen del día</title>
 <style>
-  :root{
-    --navy:#3F4FA3;
-    --dark:#2B3673;
-    --light:#8B98D9;
-    --green:#1A9E55;
-    --amber:#D97706;
-    --red:#D64545;
-    --bg:#F4F6FB;
-    --card:#fff;
-    --border:#E3E6F0;
-    --ink:#111418;
-    --muted:#6B7280;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{
-    font-family:'Inter',sans-serif;
-    background:var(--bg);
-    color:var(--ink);
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-  }
+:root{
+  --navy:#3F4FA3;--light:#8B98D9;--dark:#2B3673;
+  --green:#27ae60;--red:#c0392b;--amber:#e67e22;--gray:#eceff4;
+  --font:'Segoe UI',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#0e1630;color:#fff;min-height:100vh}
 
-  /* ── HEADER ── */
-  header{
-    background:linear-gradient(135deg, var(--dark) 0%, var(--navy) 100%);
-    padding:18px 32px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    box-shadow:0 2px 20px rgba(43,54,115,.25);
-    flex-shrink:0;
-  }
-  .hdr-brand{display:flex;align-items:center;gap:16px;}
-  .logo-plate{background:#fff;border-radius:10px;padding:7px 14px;display:flex;align-items:center;box-shadow:0 2px 6px rgba(0,0,0,.08);}
-  .logo-plate img{height:24px;display:block;}
-  .hdr-title{color:#fff;}
-  .hdr-title .main{font-size:17px;font-weight:700;letter-spacing:-.01em;}
-  .hdr-title .sub{font-size:12px;font-weight:400;color:rgba(255,255,255,.6);margin-top:2px;text-transform:uppercase;letter-spacing:.06em;}
-  .hdr-clock{text-align:right;color:#fff;}
-  .hdr-clock .time{font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;}
-  .hdr-clock .date{font-size:13px;font-weight:400;color:rgba(255,255,255,.65);margin-top:4px;}
-  .mod-sw{position:relative;}
-  .mod-sw-btn{
-    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;
-    font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
-    padding:7px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;
-  }
-  .mod-sw-btn .arr{font-size:10px;transition:transform .2s;}
-  .mod-sw-btn.open .arr{transform:rotate(180deg);}
-  .mod-sw-menu{
-    position:absolute;top:calc(100% + 8px);left:0;min-width:200px;
-    background:#fff;border:1px solid #E3E6F0;border-radius:10px;
-    box-shadow:0 8px 24px rgba(43,54,115,.15);overflow:hidden;display:none;z-index:200;
-  }
-  .mod-sw-menu.open{display:block;}
-  .mod-sw-menu a{
-    display:flex;align-items:center;gap:10px;padding:11px 16px;
-    font-size:13px;font-weight:500;color:#111418;text-decoration:none;transition:background .12s;
-  }
-  .mod-sw-menu a:hover{background:#F4F6FB;}
-  .mod-sw-menu a.cur{background:#EEF1FB;color:#2B3673;font-weight:700;}
+/* Header */
+header{background:var(--dark);padding:.9rem 1.5rem;display:flex;align-items:center;
+  gap:1rem;flex-wrap:wrap;border-bottom:2px solid var(--navy)}
+.brand{font-size:1.3rem;font-weight:800;letter-spacing:1px}
+.brand span{color:var(--light)}
+.page-title{font-size:1rem;color:var(--light);font-weight:600}
+.spacer{flex:1}
+.refresh-info{font-size:.8rem;color:rgba(255,255,255,.5);white-space:nowrap}
 
-  /* ── MAIN GRID ── */
-  main{
-    flex:1;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-    padding:20px 24px 16px;
-  }
+/* Module switcher */
+.mod-sw{position:relative;flex-shrink:0}
+.mod-sw-btn{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);
+  color:#fff;border-radius:8px;padding:.4rem 1rem;font-size:.9rem;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:.5rem;white-space:nowrap}
+.mod-sw-btn:hover{background:rgba(255,255,255,.25)}
+.mod-sw-menu{position:absolute;top:calc(100% + 6px);right:0;background:#1a2660;
+  border:1px solid var(--navy);border-radius:10px;overflow:hidden;min-width:220px;
+  display:none;z-index:600}
+.mod-sw-menu.open{display:block}
+.mod-sw-item{display:block;width:100%;padding:.8rem 1.2rem;text-align:left;
+  border:none;background:none;font-size:.95rem;cursor:pointer;color:#cdd5f0;font-family:var(--font)}
+.mod-sw-item:hover{background:rgba(255,255,255,.08)}
+.mod-sw-item.active{color:#fff;font-weight:700}
 
-  /* ── ROOM CARD ── */
-  .room-card{
-    background:var(--card);
-    border-radius:18px;
-    border:1px solid var(--border);
-    box-shadow:0 2px 12px rgba(43,54,115,.06);
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-  }
-  .room-header{
-    padding:16px 20px 14px;
-    border-bottom:1px solid var(--border);
-    display:flex;
-    align-items:center;
-    gap:12px;
-  }
-  .room-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
-  .room-header-text .name{font-size:17px;font-weight:800;color:var(--dark);}
-  .room-header-text .meta{font-size:12px;color:var(--muted);margin-top:2px;}
-  .room-status-pill{
-    margin-left:auto;
-    padding:5px 12px;
-    border-radius:20px;
-    font-size:12px;
-    font-weight:700;
-    white-space:nowrap;
-  }
-  .pill-free{background:#ECFDF5;color:var(--green);border:1px solid #A7F3D0;}
-  .pill-busy{background:#FEF3C7;color:var(--amber);border:1px solid #FDE68A;}
-  .pill-now{background:#FEE2E2;color:var(--red);border:1px solid #FECACA;animation:pulse 2s infinite;}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+/* Date badge */
+.date-badge{background:var(--navy);border-radius:8px;padding:.35rem .9rem;
+  font-size:.85rem;font-weight:600;white-space:nowrap}
 
-  /* ── TIMELINE ── */
-  .timeline{flex:1;overflow-y:auto;padding:8px 0;}
-  .t-row{
-    display:flex;
-    align-items:stretch;
-    min-height:44px;
-    border-bottom:1px solid var(--border);
-    position:relative;
-  }
-  .t-row:last-child{border-bottom:none;}
-  .t-row.is-now{background:linear-gradient(90deg,rgba(63,79,163,.06),transparent);}
-  .t-hour{
-    width:54px;
-    flex-shrink:0;
-    padding:0 10px 0 16px;
-    font-size:12px;
-    font-weight:600;
-    color:var(--muted);
-    display:flex;
-    align-items:center;
-    border-right:1px solid var(--border);
-  }
-  .t-hour.is-now{color:var(--navy);font-weight:800;}
-  .t-cell{flex:1;padding:4px 8px;display:flex;align-items:center;}
-  .t-booking{
-    width:100%;
-    border-radius:8px;
-    padding:8px 12px;
-    font-size:13px;
-    font-weight:600;
-    color:#fff;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    line-height:1.2;
-  }
-  .t-booking.ipc{background:linear-gradient(135deg,var(--navy),var(--dark));}
-  .t-booking.nasdaq{background:linear-gradient(135deg,var(--light),#6B79C4);}
-  .t-booking .b-name{flex:1;}
-  .t-booking .b-time{font-size:11px;font-weight:500;opacity:.8;white-space:nowrap;}
-  .t-booking.is-now-slot{box-shadow:0 0 0 2px #fff, 0 0 0 4px var(--navy);}
-  .t-now-marker{
-    width:6px;height:6px;border-radius:50%;
-    background:var(--navy);flex-shrink:0;
-  }
-  .t-free{color:var(--border);font-size:12px;padding-left:4px;}
+/* ── SALAS ─── */
+.salas-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;padding:1.5rem;max-width:1400px;margin:0 auto}
+@media(max-width:700px){.salas-grid{grid-template-columns:1fr}}
+.sala-card{background:#1a2660;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.sala-header{padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.08)}
+.sala-name{font-size:1.1rem;font-weight:800;letter-spacing:.5px}
+.sala-sub{font-size:.78rem;color:rgba(255,255,255,.55);margin-top:.15rem}
+.sala-status{font-size:.8rem;font-weight:700;padding:.3rem .8rem;border-radius:20px}
+.pill-free{background:rgba(39,174,96,.25);color:#5ee68f;border:1px solid rgba(39,174,96,.4)}
+.pill-busy{background:rgba(230,126,34,.25);color:#f5a623;border:1px solid rgba(230,126,34,.4)}
+.pill-now{background:rgba(192,57,43,.35);color:#ff7675;border:1px solid rgba(192,57,43,.5);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.sala-body{padding:1.25rem}
+.timeline{display:flex;flex-direction:column;gap:.5rem}
+.tl-row{display:flex;gap:.75rem;align-items:flex-start;font-size:.85rem;padding:.5rem .75rem;
+  border-radius:8px;background:rgba(255,255,255,.05)}
+.tl-row.current{background:rgba(192,57,43,.2);border:1px solid rgba(192,57,43,.35)}
+.tl-row.upcoming{background:rgba(63,79,163,.2);border:1px solid rgba(63,79,163,.35)}
+.tl-time{min-width:90px;color:var(--light);font-weight:600;font-size:.82rem}
+.tl-name{color:#fff}
+.tl-empty{color:rgba(255,255,255,.35);font-style:italic;font-size:.85rem;padding:.5rem .75rem}
+.tl-free{color:var(--green)}
 
-  /* ── FOOTER ── */
-  footer{
-    padding:10px 24px 14px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    flex-shrink:0;
-  }
-  .footer-refresh{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;}
-  .refresh-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
-  .footer-link{font-size:12px;color:var(--navy);text-decoration:none;font-weight:600;}
-  .footer-link:hover{text-decoration:underline;}
+/* ── PUESTOS ─── */
+.puestos-wrap{padding:1.5rem;max-width:1400px;margin:0 auto}
+.bloque-label{font-size:.85rem;font-weight:700;color:var(--light);letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:.75rem;margin-top:1.25rem}
+.puestos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.85rem}
+.puesto-card{background:#1a2660;border-radius:12px;padding:.9rem 1rem;
+  border-top:4px solid var(--navy);transition:border-color .3s}
+.puesto-card.state-free{border-top-color:var(--green)}
+.puesto-card.state-busy{border-top-color:var(--navy)}
+.puesto-card.state-soon{border-top-color:var(--amber)}
+.puesto-card.state-off{border-top-color:#555;opacity:.6}
+.puesto-card .p-name{font-size:.85rem;font-weight:800;color:#fff;margin-bottom:.35rem}
+.puesto-card .p-pill{display:inline-block;font-size:.72rem;font-weight:700;
+  padding:.15rem .55rem;border-radius:10px;margin-bottom:.4rem}
+.p-pill.pill-free{background:rgba(39,174,96,.2);color:#5ee68f;border:1px solid rgba(39,174,96,.35)}
+.p-pill.pill-busy{background:rgba(63,79,163,.25);color:var(--light);border:1px solid rgba(63,79,163,.4)}
+.p-pill.pill-soon{background:rgba(230,126,34,.2);color:#f5a623;border:1px solid rgba(230,126,34,.35)}
+.p-pill.pill-off{background:rgba(150,150,150,.15);color:#888;border:1px solid #555}
+.puesto-card .p-info{font-size:.75rem;color:rgba(255,255,255,.55);margin-top:.2rem;line-height:1.4}
 
-  /* ── NO BOOKINGS ── */
-  .no-bookings{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    flex:1;padding:32px;text-align:center;color:var(--muted);
-  }
-  .no-bookings .icon{font-size:36px;margin-bottom:10px;}
-  .no-bookings p{font-size:14px;}
-
-  /* ── LOADING ── */
-  #loadingOverlay{
-    position:fixed;inset:0;background:var(--bg);
-    display:flex;align-items:center;justify-content:center;
-    flex-direction:column;gap:14px;z-index:99;
-  }
-  .spinner-lg{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  #loadingOverlay p{font-size:14px;color:var(--muted);}
-
-  @media(max-width:700px){
-    main{grid-template-columns:1fr;}
-    .hdr-clock .time{font-size:24px;}
-  }
+/* Loading */
+#loadingR{display:flex;align-items:center;justify-content:center;height:60vh;
+  flex-direction:column;gap:1rem;color:var(--light)}
+.spin{width:40px;height:40px;border:4px solid rgba(255,255,255,.2);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<div id="loadingOverlay">
-  <div class="spinner-lg"></div>
-  <p>Cargando reservas de hoy…</p>
-</div>
-
 <header>
-  <div class="hdr-brand">
-    <div class="logo-plate"><img src="assets/face-logo-color.png" alt="FACE"></div>
-    <div class="mod-sw" id="modSw">
-      <button class="mod-sw-btn" id="modSwBtn" onclick="document.getElementById('modSwBtn').classList.toggle('open');document.getElementById('modSwMenu').classList.toggle('open')">
-        🏢 Salas de Juntas <span class="arr">▾</span>
-      </button>
-      <div class="mod-sw-menu" id="modSwMenu">
-        <a href="index.html">🏢 Salas de Juntas</a>
-        <a href="puestos.html">🗂 Puestos de Trabajo</a>
-      </div>
+  <div class="brand">FACE <span>IPC</span></div>
+  <span class="page-title" id="pageTitle">Resumen del día</span>
+  <div class="date-badge" id="dateBadge">—</div>
+  <div class="spacer"></div>
+  <div class="mod-sw" id="modSw">
+    <button class="mod-sw-btn" onclick="toggleModSw()">
+      <span id="modSwLabel">🏢 Salas de Juntas</span> <span>▾</span>
+    </button>
+    <div class="mod-sw-menu" id="modSwMenu">
+      <button class="mod-sw-item active" id="msItemSalas" onclick="switchMode('salas')">🏢 Salas de Juntas</button>
+      <button class="mod-sw-item" id="msItemPuestos" onclick="switchMode('puestos')">🗂 Puestos de Trabajo</button>
     </div>
   </div>
-  <div class="hdr-clock">
-    <div class="time" id="clock">--:--</div>
-    <div class="date" id="dateLabel">--</div>
-  </div>
+  <div class="refresh-info" id="refreshInfo">Actualiza automáticamente</div>
+  <a href="index.html" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);
+    border-radius:6px;padding:.3rem .8rem;font-size:.8rem;text-decoration:none;white-space:nowrap">
+    ← Reservaciones
+  </a>
 </header>
 
-<main id="mainGrid"></main>
+<div id="loadingR">
+  <div class="spin"></div>
+  <span>Cargando…</span>
+</div>
 
-<footer>
-  <div class="footer-refresh">
-    <div class="refresh-dot"></div>
-    <span id="refreshLabel">Actualizando cada 5 min</span>
+<!-- SALAS -->
+<div id="viewSalas" style="display:none">
+  <div class="salas-grid" id="salasGrid"></div>
+</div>
+
+<!-- PUESTOS -->
+<div id="viewPuestos" style="display:none">
+  <div class="puestos-wrap">
+    <div class="bloque-label">Bloque A — P1 a P8</div>
+    <div class="puestos-grid" id="gridBloqueA"></div>
+    <div class="bloque-label">Bloque B — P9 a P16</div>
+    <div class="puestos-grid" id="gridBloqueB"></div>
   </div>
-  <a class="footer-link" href="index.html">← Ir a la app completa</a>
-</footer>
+</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzn97PY2IowALy3LB4SF9yjwREPiwt8SCYk_k53IYB3Exxq1tLakSFatu8U0PdqM6ORbA/exec";
-const ROOMS = [
-  {id:"IPC",    label:"Sala IPC",    cap:8, equip:"Proyector Samsung",    cls:"ipc",    dot:"#3F4FA3"},
-  {id:"NASDAQ", label:"Sala NASDAQ", cap:6, equip:"Pantalla The Frame",   cls:"nasdaq", dot:"#8B98D9"}
-];
-const START_HOUR = 7;  // hora mínima en pantalla
-const END_HOUR   = 21; // hora máxima en pantalla
-const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const DAYS   = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const API_URL='https://script.google.com/macros/s/AKfycbzn97PY2IowALy3LB4SF9yjwREPiwt8SCYk_k53IYB3Exxq1tLakSFatu8U0PdqM6ORbA/exec';
+const ROOMS={IPC:{label:'Sala IPC',cap:'8 pers.',tv:'Samsung 85"'},NASDAQ:{label:'Sala NASDAQ',cap:'6 pers.',tv:'The Frame'}};
+let currentMode='salas', puestosConfig=[], refreshTimer=null;
 
-let bookings = [];
+function pad2(n){return String(n).padStart(2,'0')}
+function todayStr(){return new Date().toISOString().slice(0,10)}
 
-// ── Reloj en vivo ────────────────────────────────────────────────────────────
-function updateClock(){
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  document.getElementById('dateLabel').textContent =
-    `${DAYS[now.getDay()]}, ${now.getDate()} de ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
-}
-setInterval(updateClock, 1000);
-updateClock();
+function toggleModSw(){document.getElementById('modSwMenu').classList.toggle('open')}
+document.addEventListener('click',e=>{
+  if(!document.getElementById('modSw').contains(e.target))
+    document.getElementById('modSwMenu').classList.remove('open');
+});
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function todayStr(){
-  return new Date().toISOString().slice(0,10);
-}
-function shortName(n){
-  const parts = n.trim().split(/\s+/);
-  return parts.length===1 ? parts[0] : parts[0]+' '+parts[1].charAt(0)+'.';
-}
-function hourLabel(h){
-  return `${String(h).padStart(2,'0')}:00`;
-}
-function currentHour(){
-  return new Date().getHours();
+function switchMode(m){
+  currentMode=m;
+  document.getElementById('modSwLabel').textContent=m==='salas'?'🏢 Salas de Juntas':'🗂 Puestos de Trabajo';
+  document.getElementById('msItemSalas').classList.toggle('active',m==='salas');
+  document.getElementById('msItemPuestos').classList.toggle('active',m==='puestos');
+  document.getElementById('modSwMenu').classList.remove('open');
+  document.getElementById('pageTitle').textContent=m==='salas'?'Resumen de Salas':'Resumen de Puestos';
+  history.replaceState(null,'',`?m=${m}`);
+  startRefresh();
 }
 
-// ── Fetch ─────────────────────────────────────────────────────────────────────
-async function loadData(){
-  try{
-    const res = await fetch(`${API_URL}?date=${todayStr()}`);
-    if(res.ok) bookings = await res.json();
-  }catch(e){
-    bookings = [];
-  }
-  render();
-  document.getElementById('loadingOverlay').style.display = 'none';
-  updateRefreshLabel();
-}
-
-// ── Render ────────────────────────────────────────────────────────────────────
-function render(){
-  const now = currentHour();
-  const grid = document.getElementById('mainGrid');
-  grid.innerHTML = '';
-
-  ROOMS.forEach(room => {
-    const roomBookings = bookings.filter(b => b.room === room.id);
-
-    // Estado actual de la sala
-    const currentBooking = roomBookings.find(b => {
-      const s = parseInt(b.time.split(':')[0],10);
-      return now >= s && now < s + (b.duration||1);
+async function loadSalas(){
+  const today=todayStr();
+  const now=new Date(); const nowH=now.getHours()+now.getMinutes()/60;
+  let bookings=[];
+  try{const d=await fetch(API_URL+'?date='+today);const j=await d.json();bookings=j.bookings||[];}catch{}
+  const html=Object.entries(ROOMS).map(([rid,r])=>{
+    const rbs=bookings.filter(b=>b.room===rid).sort((a,b)=>a.time.localeCompare(b.time));
+    const curB=rbs.find(b=>{const s=Number(b.time?.slice(0,2)),d=Math.max(1,Number(b.duration)||1);return s<=nowH&&nowH<s+d;});
+    const nextB=!curB?rbs.find(b=>Number(b.time?.slice(0,2))>nowH):null;
+    let pillCls='pill-free', pillTxt='Disponible';
+    if(curB){pillCls='pill-now';pillTxt='En uso ahora';}
+    else if(nextB){const diff=Number(nextB.time?.slice(0,2))-nowH;pillCls=diff<1?'pill-busy':'pill-free';pillTxt=diff<1?`Pronto: ${nextB.time}`:`Libre · próx. ${nextB.time}`;}
+    let tlHtml='';
+    if(!rbs.length){tlHtml=`<div class="tl-empty tl-free">Ninguna reserva hoy</div>`;}
+    else rbs.forEach(b=>{
+      const s=Number(b.time?.slice(0,2)),d=Math.max(1,Number(b.duration)||1);
+      const isCur=s<=nowH&&nowH<s+d;
+      tlHtml+=`<div class="tl-row ${isCur?'current':'upcoming'}">
+        <div class="tl-time">${pad2(s)}:00 – ${pad2(s+d)}:00</div>
+        <div class="tl-name">${b.advisor}</div>
+      </div>`;
     });
-    const nextBooking = roomBookings
-      .filter(b => parseInt(b.time.split(':')[0],10) > now)
-      .sort((a,b) => a.time.localeCompare(b.time))[0];
-
-    let pillClass = 'pill-free', pillText = 'Disponible';
-    if(currentBooking){
-      pillClass = 'pill-now';
-      pillText  = 'En uso ahora';
-    } else if(nextBooking){
-      const diffH = parseInt(nextBooking.time.split(':')[0],10) - now;
-      if(diffH <= 1) { pillClass = 'pill-busy'; pillText = 'Próxima en <1h'; }
-    }
-
-    // Rango de horas a mostrar (mínimo START–END, ampliar si hay reservas fuera)
-    let minH = START_HOUR, maxH = END_HOUR;
-    roomBookings.forEach(b=>{
-      const s = parseInt(b.time.split(':')[0],10);
-      minH = Math.min(minH, s);
-      maxH = Math.max(maxH, s + (b.duration||1));
-    });
-    minH = Math.max(0, minH - 1);
-    maxH = Math.min(24, maxH + 1);
-
-    // Construir filas de timeline
-    let timelineHTML = '';
-    for(let h = minH; h < maxH; h++){
-      const isNow = h === now;
-
-      // ¿Hay una reserva que empieza aquí?
-      const startingBooking = roomBookings.find(b => parseInt(b.time.split(':')[0],10) === h);
-      // ¿Esta hora está cubierta por una reserva que empezó antes?
-      const coveringBooking = !startingBooking
-        ? roomBookings.find(b => {
-            const s = parseInt(b.time.split(':')[0],10);
-            return h > s && h < s + (b.duration||1);
-          })
-        : null;
-
-      if(coveringBooking) continue; // cubierta por rowspan visual (se omite)
-
-      const rowClass = isNow ? ' is-now' : '';
-      const hourClass = isNow ? ' is-now' : '';
-
-      timelineHTML += `<div class="t-row${rowClass}">`;
-      timelineHTML += `<div class="t-hour${hourClass}">${isNow ? '▶' : ''} ${hourLabel(h)}</div>`;
-      timelineHTML += `<div class="t-cell">`;
-
-      if(startingBooking){
-        const s = parseInt(startingBooking.time.split(':')[0],10);
-        const endH = Math.min(s + (startingBooking.duration||1), 24);
-        const nowSlotClass = (isNow || (now > s && now < endH)) ? ' is-now-slot' : '';
-        timelineHTML += `
-          <div class="t-booking ${room.cls}${nowSlotClass}">
-            <div class="b-name">${shortName(startingBooking.advisor)}</div>
-            <div class="b-time">${hourLabel(s)} – ${hourLabel(endH)}</div>
-          </div>`;
-      } else {
-        timelineHTML += `<div class="t-free">—</div>`;
-      }
-
-      timelineHTML += `</div></div>`;
-    }
-
-    const card = document.createElement('div');
-    card.className = 'room-card';
-    card.innerHTML = `
-      <div class="room-header">
-        <div class="room-dot" style="background:${room.dot};box-shadow:0 0 0 4px ${room.dot}22;"></div>
-        <div class="room-header-text">
-          <div class="name">${room.label}</div>
-          <div class="meta">${room.cap} personas · ${room.equip}</div>
-        </div>
-        <div class="room-status-pill ${pillClass}">${pillText}</div>
+    return `<div class="sala-card">
+      <div class="sala-header">
+        <div><div class="sala-name">${r.label}</div><div class="sala-sub">${r.cap} · ${r.tv}</div></div>
+        <div class="sala-status ${pillCls}">${pillTxt}</div>
       </div>
-      <div class="timeline">${timelineHTML || '<div class="no-bookings"><div class="icon">📅</div><p>Sin reservas hoy</p></div>'}</div>
-    `;
-    grid.appendChild(card);
-  });
+      <div class="sala-body"><div class="timeline">${tlHtml}</div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('salasGrid').innerHTML=html;
 }
 
-// ── Refresh automático ────────────────────────────────────────────────────────
-let lastLoad = new Date();
-function updateRefreshLabel(){
-  lastLoad = new Date();
+async function loadPuestos(){
+  if(!puestosConfig.length){
+    try{const d=await fetch(API_URL+'?action=puestos');const j=await d.json();puestosConfig=j.puestos||[];}catch{}
+  }
+  const today=todayStr(); const now=new Date(); const nowH=now.getHours()+now.getMinutes()/60;
+  let bookings=[];
+  try{const d=await fetch(`${API_URL}?action=reservasPuestos&date=${today}`);const j=await d.json();bookings=j.bookings||[];}catch{}
+
+  function renderCard(pid){
+    const cfg=puestosConfig.find(p=>p.id===pid);
+    const active=cfg?.disponible!==false;
+    const bs=bookings.filter(b=>b.puesto===pid);
+    const curB=bs.find(b=>{const s=Number(b.time?.slice(0,2)),d=Math.max(1,Number(b.duration)||1);return s<=nowH&&nowH<s+d;});
+    const nextB=!curB?bs.filter(b=>Number(b.time?.slice(0,2))>nowH).sort((a,b2)=>a.time.localeCompare(b2.time))[0]:null;
+    let state='free', pill='pill-free', pillTxt='Disponible', info='';
+    if(!active){state='off';pill='pill-off';pillTxt='No disponible';}
+    else if(curB){
+      state='busy';pill='pill-busy';
+      const s=Number(curB.time?.slice(0,2)),d=Math.max(1,Number(curB.duration)||1);
+      pillTxt='En uso'; info=`${curB.advisor}<br>${pad2(s)}:00 – ${pad2(s+d)}:00`;
+    } else if(nextB){
+      const s=Number(nextB.time?.slice(0,2)),d=Math.max(1,Number(nextB.duration)||1);
+      if(s-nowH<1){state='soon';pill='pill-soon';pillTxt='Próxima &lt;1h';}
+      info=`Próx: ${pad2(s)}:00 – ${pad2(s+d)}:00<br>${nextB.advisor}`;
+    }
+    return `<div class="puesto-card state-${state}">
+      <div class="p-name">${cfg?.nombre||pid}</div>
+      <span class="p-pill ${pill}">${pillTxt}</span>
+      ${info?`<div class="p-info">${info}</div>`:''}
+    </div>`;
+  }
+
+  const bloqueA=['P1','P2','P3','P4','P5','P6','P7','P8'];
+  const bloqueB=['P9','P10','P11','P12','P13','P14','P15','P16'];
+  document.getElementById('gridBloqueA').innerHTML=bloqueA.map(renderCard).join('');
+  document.getElementById('gridBloqueB').innerHTML=bloqueB.map(renderCard).join('');
 }
-setInterval(()=>{
-  const diff = Math.round((new Date() - lastLoad) / 60000);
-  const label = diff === 0
-    ? 'Actualizado hace un momento'
-    : `Actualizado hace ${diff} min`;
-  document.getElementById('refreshLabel').textContent = label;
-}, 30000);
 
-// Recargar datos cada 5 minutos
-setInterval(()=>{ loadData(); }, 5 * 60 * 1000);
+async function refresh(){
+  document.getElementById('loadingR').style.display='none';
+  if(currentMode==='salas'){
+    document.getElementById('viewSalas').style.display='';
+    document.getElementById('viewPuestos').style.display='none';
+    await loadSalas();
+  } else {
+    document.getElementById('viewPuestos').style.display='';
+    document.getElementById('viewSalas').style.display='none';
+    await loadPuestos();
+  }
+  const now=new Date();
+  document.getElementById('refreshInfo').textContent=`Actualizado: ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  document.getElementById('dateBadge').textContent=now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+}
 
-// Volver a renderizar cada minuto (actualiza el "ahora")
-setInterval(()=>{ render(); }, 60 * 1000);
+function startRefresh(){
+  if(refreshTimer)clearInterval(refreshTimer);
+  refresh();
+  refreshTimer=setInterval(refresh,5*60*1000);
+}
 
-// ── Inicio ────────────────────────────────────────────────────────────────────
-loadData();
+window.addEventListener('DOMContentLoaded',()=>{
+  const m=new URLSearchParams(location.search).get('m')||'salas';
+  if(m==='puestos'){
+    currentMode='puestos';
+    document.getElementById('modSwLabel').textContent='🗂 Puestos de Trabajo';
+    document.getElementById('msItemSalas').classList.remove('active');
+    document.getElementById('msItemPuestos').classList.add('active');
+    document.getElementById('pageTitle').textContent='Resumen de Puestos';
+  }
+  startRefresh();
+});
 </script>
 </body>
 </html>

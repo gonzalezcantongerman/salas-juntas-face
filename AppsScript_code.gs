@@ -225,6 +225,38 @@ function doPost(e) {
   return jsonResponse({ ok:false, message:"Acción no reconocida." });
 }
 
+// ─── Validaciones comunes ────────────────────────────────────────────────────
+
+/** Verifica si el asesor ya tiene reserva en salas O puestos en ese horario.
+ *  Los administradores están exentos — llama esta función solo para no-admins. */
+function advisorHasConcurrentBooking(advisor, date, startH, duration, excludeId) {
+  // Salas
+  const sd = getSheet().getDataRange().getValues();
+  if(sd.length > 1){
+    const si = buildIdx(sd[0], ['id','date','time','duration','advisor']);
+    for(let i=1;i<sd.length;i++){
+      const r=sd[i]; if(r[si.id]===excludeId) continue;
+      if(normalizeName(r[si.advisor])!==normalizeName(advisor)) continue;
+      if(normalizeDate(r[si.date])!==date) continue;
+      const s=startHour(r[si.time]), d2=Math.max(1,Number(r[si.duration])||1);
+      if(rangesOverlap(startH,startH+duration,s,s+d2)) return true;
+    }
+  }
+  // Puestos
+  const pd = getReservasPuestosSheet().getDataRange().getValues();
+  if(pd.length > 1){
+    const pi = buildIdx(pd[0], ['id','date','time','duration','advisor']);
+    for(let i=1;i<pd.length;i++){
+      const r=pd[i]; if(r[pi.id]===excludeId) continue;
+      if(normalizeName(r[pi.advisor])!==normalizeName(advisor)) continue;
+      if(normalizeDate(r[pi.date])!==date) continue;
+      const s=startHour(r[pi.time]), d2=Math.max(1,Number(r[pi.duration])||1);
+      if(rangesOverlap(startH,startH+duration,s,s+d2)) return true;
+    }
+  }
+  return false;
+}
+
 // ─── Lógica Salas ─────────────────────────────────────────────────────────────
 
 function handleCreate(sheet, body) {
@@ -239,6 +271,13 @@ function handleCreate(sheet, body) {
     if (!rec)       return jsonResponse({ok:false,message:"Asesor no encontrado. Contacta a un administrador."});
     if (!rec.activo) return jsonResponse({ok:false,message:"Tu cuenta está desactivada."});
 
+    // Máximo 1 mes de anticipación (no-admins)
+    if(!isAdmin(advisor, advisors)){
+      const maxD=new Date(); maxD.setMonth(maxD.getMonth()+1);
+      if(new Date(date+'T12:00:00Z')>maxD)
+        return jsonResponse({ok:false,message:`Solo puedes reservar con máximo 1 mes de anticipación (hasta el ${maxD.toISOString().slice(0,10)}).`});
+    }
+
     const data = sheet.getDataRange().getValues(); const headers = data.shift();
     const idx = buildIdx(headers,["room","date","time","duration","advisor"]);
 
@@ -248,6 +287,10 @@ function handleCreate(sheet, body) {
       return rangesOverlap(newStart,newStart+duration,startHour(r[idx.time]),startHour(r[idx.time])+(Math.max(1,Number(r[idx.duration])||1)));
     });
     if (conflict) return jsonResponse({ok:false,message:"Ese horario se cruza con otra reserva existente."});
+
+    // Reserva simultánea del mismo asesor (no-admins)
+    if(!isAdmin(advisor, advisors) && advisorHasConcurrentBooking(advisor, date, newStart, duration, null))
+      return jsonResponse({ok:false,message:"Ya tienes una reserva en ese horario. No puedes tener dos reservas simultáneas."});
 
     const wStart=weekStart(date), wEnd=weekEnd(wStart);
     const used = data.reduce((s,r)=>{
@@ -351,6 +394,13 @@ function handleCreatePuesto(sheet, body) {
     if(!rec)       return jsonResponse({ok:false,message:"Asesor no encontrado."});
     if(!rec.activo) return jsonResponse({ok:false,message:"Tu cuenta está desactivada."});
 
+    // Máximo 1 mes de anticipación (no-admins)
+    if(!isAdmin(advisor, advisors)){
+      const maxD=new Date(); maxD.setMonth(maxD.getMonth()+1);
+      if(new Date(date+'T12:00:00Z')>maxD)
+        return jsonResponse({ok:false,message:`Solo puedes reservar con máximo 1 mes de anticipación (hasta el ${maxD.toISOString().slice(0,10)}).`});
+    }
+
     const data=sheet.getDataRange().getValues(); const headers=data.shift();
     const idx=buildIdx(headers,["puesto","date","time","duration","advisor"]);
 
@@ -360,6 +410,10 @@ function handleCreatePuesto(sheet, body) {
       return rangesOverlap(newStart,newStart+duration,startHour(r[idx.time]),startHour(r[idx.time])+Math.max(1,Number(r[idx.duration])||1));
     });
     if(conflict) return jsonResponse({ok:false,message:"Ese horario ya está ocupado en este puesto."});
+
+    // Reserva simultánea del mismo asesor (no-admins)
+    if(!isAdmin(advisor, advisors) && advisorHasConcurrentBooking(advisor, date, newStart, duration, null))
+      return jsonResponse({ok:false,message:"Ya tienes una reserva en ese horario. No puedes tener dos reservas simultáneas."});
 
     const wS=weekStart(date),wE=weekEnd(wS);
     const used=data.reduce((s,r)=>{

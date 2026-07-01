@@ -2,1296 +2,1046 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FACE Financial Advisors | Salas de Juntas</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FACE – Reservaciones</title>
 <style>
-  :root{
-    --face-navy:#3F4FA3;
-    --face-light:#8B98D9;
-    --face-dark:#2B3673;
-    --ink:#111418;
-    --bg:#F5F6FA;
-    --card:#FFFFFF;
-    --border:#E3E6F0;
-    --green:#1F9D55;
-    --red:#D64545;
-    --muted:#6B7280;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    font-family:'Inter',Arial,sans-serif;
-    background:
-      radial-gradient(ellipse 900px 500px at 100% -10%, rgba(63,79,163,.07), transparent 60%),
-      var(--bg);
-    color:var(--ink);
-  }
-  header{
-    background:linear-gradient(135deg, var(--face-dark) 0%, var(--face-navy) 100%);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:16px 28px;
-    position:sticky;
-    top:0;
-    z-index:50;
-    box-shadow:0 2px 16px rgba(43,54,115,.18);
-  }
-  header .brand{display:flex;align-items:center;gap:14px;}
-  header .brand .logo-plate{
-    background:#fff;border-radius:10px;padding:7px 14px;display:flex;align-items:center;
-    box-shadow:0 2px 6px rgba(0,0,0,.08);
-  }
-  header .brand .logo-plate img{height:26px;display:block;}
-  header .brand .title{
-    font-weight:700;
-    font-size:15px;
-    color:#fff;
-    border-left:1px solid rgba(255,255,255,.25);
-    padding-left:14px;
-    line-height:1.2;
-  }
-  header .brand .title span{
-    display:block;font-weight:500;font-size:11px;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;
-  }
-  /* Module switcher */
-  .mod-sw{position:relative;}
-  .mod-sw-btn{
-    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;
-    font-family:'Inter',sans-serif;font-size:14px;font-weight:600;
-    padding:8px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s;
-  }
-  .mod-sw-btn:hover{background:rgba(255,255,255,.2);}
-  .mod-sw-btn .arr{font-size:10px;transition:transform .2s;}
-  .mod-sw-btn.open .arr{transform:rotate(180deg);}
-  .mod-sw-menu{
-    position:absolute;top:calc(100% + 8px);left:0;min-width:200px;
-    background:#fff;border:1px solid #E3E6F0;border-radius:10px;
-    box-shadow:0 8px 24px rgba(43,54,115,.15);overflow:hidden;display:none;z-index:200;
-  }
-  .mod-sw-menu.open{display:block;}
-  .mod-sw-menu a{
-    display:flex;align-items:center;gap:10px;padding:11px 16px;
-    font-size:13px;font-weight:500;color:#111418;text-decoration:none;transition:background .12s;
-  }
-  .mod-sw-menu a:hover{background:#F4F6FB;}
-  .mod-sw-menu a.cur{background:#EEF1FB;color:#2B3673;font-weight:700;}
-  .mod-sw-menu a .bdg{font-size:10px;background:#3F4FA3;color:#fff;padding:2px 7px;border-radius:20px;margin-left:auto;}
-  #userBox{display:flex;align-items:center;gap:12px;font-size:14px;}
-  #userBox .name{font-weight:700;color:#fff;}
-  #loggedAs{color:rgba(255,255,255,.85);font-size:13.5px;}
-  #userBox #logoutBtn{
-    border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;
-    border-radius:20px;padding:6px 14px;cursor:pointer;font-size:12.5px;font-weight:600;
-  }
-  #userBox #logoutBtn:hover{background:rgba(255,255,255,.12);}
-  .btn-reservar-header{
-    border:none;background:#fff;color:var(--face-navy);border-radius:20px;
-    padding:10px 20px;cursor:pointer;font-size:13.5px;font-weight:700;
-    box-shadow:0 2px 8px rgba(0,0,0,.12);transition:.15s;
-  }
-  .btn-reservar-header:hover{background:#EEF1FB;transform:translateY(-1px);}
+/* ── Variables ──────────────────────────────────────────────────────────── */
+:root{
+  --navy:#3F4FA3; --light:#8B98D9; --dark:#2B3673;
+  --green:#27ae60; --red:#c0392b; --amber:#e67e22; --gray:#eceff4;
+  --text:#1a1a2e; --card:#fff; --shadow:0 2px 12px rgba(0,0,0,.10);
+  --radius:12px; --font:'Segoe UI',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--gray);color:var(--text);min-height:100vh}
 
-  .week-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
-  .week-nav .week-range{font-weight:700;font-size:15px;color:var(--face-dark);}
-  .week-nav .week-controls{display:flex;align-items:center;gap:6px;}
-  .week-arrow{
-    border:1px solid var(--border);background:#fff;border-radius:8px;width:32px;height:32px;
-    font-size:16px;cursor:pointer;color:var(--face-navy);flex:0 0 auto;
-  }
-  .week-arrow:hover{background:var(--bg);}
-  .week-today-btn{
-    border:1px solid var(--border);background:#fff;border-radius:8px;height:32px;padding:0 12px;
-    font-size:12.5px;font-weight:600;color:var(--face-navy);cursor:pointer;
-  }
-  .week-today-btn:hover{background:var(--bg);}
+/* ── Loading ────────────────────────────────────────────────────────────── */
+#loading{position:fixed;inset:0;background:var(--navy);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
+#loading.hide{opacity:0;pointer-events:none}
+#loading .brand-big{font-size:2.5rem;font-weight:800;color:#fff;letter-spacing:2px}
+#loading .sub{color:rgba(255,255,255,.7);margin-top:.5rem;font-size:.95rem}
+.loader{width:48px;height:48px;border:5px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .9s linear infinite;margin-bottom:1.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  /* CALENDARIO SEMANAL - estilo grilla tipo iPhone */
-  .cal-room-label{
-    font-weight:700;color:var(--face-dark);font-size:14.5px;margin:22px 0 10px;display:flex;align-items:center;gap:9px;
-  }
-  .cal-room-label .room-meta{font-size:12px;font-weight:500;color:var(--muted);}
-  .cal-room-dot{width:11px;height:11px;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px rgba(63,79,163,.12);}
-  .cal-grid-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 2px rgba(43,54,115,.04);}
-  table.cal-grid{width:100%;border-collapse:collapse;font-size:11.5px;min-width:680px;}
-  table.cal-grid th{
-    background:#FAFBFE;color:var(--muted);font-weight:600;text-align:center;padding:10px 4px;
-    border-bottom:1px solid var(--border);border-left:1px solid var(--border);position:sticky;top:0;
-  }
-  table.cal-grid th:first-child, table.cal-grid td.hour-col{border-left:none;}
-  table.cal-grid th .wd{display:block;font-size:10.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.03em;}
-  table.cal-grid th .dd{display:block;font-size:15px;font-weight:800;color:var(--ink);margin-top:1px;}
-  table.cal-grid th.is-today{background:linear-gradient(180deg, var(--face-navy), var(--face-dark));}
-  table.cal-grid th.is-today .wd, table.cal-grid th.is-today .dd{color:#fff;}
-  table.cal-grid td{border-left:1px solid var(--border);border-top:1px solid var(--border);padding:3px;vertical-align:middle;height:38px;}
-  table.cal-grid tr:nth-child(even) td:not(.hour-col){background:#FBFCFE;}
-  table.cal-grid td.hour-col{
-    background:#FAFBFE;color:var(--muted);font-weight:600;font-size:11px;white-space:nowrap;
-    padding:3px 12px;text-align:right;
-  }
-  .cal-cell-free{width:100%;height:100%;min-height:30px;border-radius:6px;cursor:pointer;transition:.12s;}
-  .cal-cell-free:hover{background:#EEF1FB;}
-  .cal-booking{
-    width:100%;height:100%;min-height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;
-    text-align:center;font-size:10.5px;font-weight:700;line-height:1.15;padding:2px;color:#fff;
-    background:linear-gradient(135deg, var(--face-navy), var(--face-dark));
-    overflow:hidden;box-shadow:0 1px 3px rgba(43,54,115,.25);cursor:pointer;transition:.12s;
-  }
-  .cal-booking:hover{transform:scale(1.03);box-shadow:0 2px 6px rgba(43,54,115,.35);}
-  .cal-booking.room-nasdaq{background:linear-gradient(135deg, var(--face-light), #6B79C4);color:#fff;}
+/* ── Toast ──────────────────────────────────────────────────────────────── */
+#toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#333;color:#fff;padding:.75rem 1.5rem;border-radius:30px;
+  font-size:.9rem;z-index:9998;transition:transform .3s;pointer-events:none;text-align:center;max-width:90vw}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.err{background:var(--red)}
 
-  main{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
+/* ── Login ──────────────────────────────────────────────────────────────── */
+#loginOverlay{position:fixed;inset:0;background:rgba(43,54,115,.97);display:flex;
+  align-items:center;justify-content:center;z-index:9000}
+.login-card{background:#fff;border-radius:var(--radius);padding:2.5rem 2rem;
+  width:min(380px,95vw);box-shadow:var(--shadow);text-align:center}
+.login-card .brand{font-size:1.9rem;font-weight:800;color:var(--navy);letter-spacing:1px}
+.login-card p{color:#666;margin:.5rem 0 1.5rem;font-size:.9rem}
+.login-card select{width:100%;padding:.75rem 1rem;border:1.5px solid #d0d5e8;
+  border-radius:8px;font-size:1rem;margin-bottom:1rem;outline:none;
+  font-family:var(--font);background:#fff}
+.login-card select:focus{border-color:var(--navy)}
+.login-card button{width:100%;padding:.85rem;background:var(--navy);color:#fff;
+  border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer}
+.login-card button:hover{background:var(--dark)}
 
-  /* LOGIN */
-  #loginScreen{
-    min-height:80vh;display:flex;align-items:center;justify-content:center;
-  }
-  .login-card{
-    background:#fff;border:1px solid var(--border);border-radius:20px;
-    padding:44px 36px 38px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(43,54,115,.18);
-    text-align:center;border-top:4px solid transparent;
-    background-image:linear-gradient(#fff,#fff), linear-gradient(90deg, var(--face-light), var(--face-navy), var(--face-dark));
-    background-origin:border-box;background-clip:padding-box, border-box;
-  }
-  .login-card img{height:50px;margin-bottom:20px;}
-  .login-card h1{font-size:19px;margin:0 0 6px;color:var(--face-dark);font-weight:800;}
-  .login-card p{font-size:13.5px;color:var(--muted);margin:0 0 24px;}
-  select#advisorSelect{
-    width:100%;padding:13px 14px;border-radius:10px;border:1.5px solid var(--border);
-    font-size:14px;font-family:inherit;background:#fff;color:var(--ink);margin-bottom:16px;
-  }
-  .btn-primary{
-    width:100%;background:linear-gradient(135deg, var(--face-navy), var(--face-dark));color:#fff;border:none;border-radius:10px;
-    padding:14px;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;
-    box-shadow:0 4px 14px rgba(63,79,163,.3);
-  }
-  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(63,79,163,.4);}
-  .btn-primary:disabled{background:#C9CEEB;cursor:not-allowed;box-shadow:none;transform:none;}
+/* ── Header ─────────────────────────────────────────────────────────────── */
+header{background:var(--navy);color:#fff;padding:.85rem 1.5rem;display:flex;
+  align-items:center;gap:1rem;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.2);position:sticky;top:0;z-index:500}
+.brand{font-size:1.2rem;font-weight:800;letter-spacing:1px;white-space:nowrap}
+.brand span{color:var(--light)}
+.user-pill{background:rgba(255,255,255,.15);border-radius:20px;padding:.3rem .9rem;
+  font-size:.85rem;white-space:nowrap;flex-shrink:0}
+.logout-btn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+  color:#fff;border-radius:6px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;white-space:nowrap}
+.logout-btn:hover{background:rgba(255,255,255,.3)}
+.spacer{flex:1}
 
-  /* APP */
-  #appScreen{display:block;}
-  .tabs{
-    display:inline-flex;gap:2px;margin-bottom:24px;background:#fff;border:1px solid var(--border);
-    border-radius:14px;padding:4px;box-shadow:0 1px 3px rgba(43,54,115,.05);
-  }
-  .tab-btn{
-    border:none;background:none;padding:10px 20px;font-size:13.5px;font-weight:600;
-    color:var(--muted);cursor:pointer;border-radius:10px;transition:.15s;
-  }
-  .tab-btn:hover{color:var(--face-navy);}
-  .tab-btn.active{color:#fff;background:var(--face-navy);box-shadow:0 2px 8px rgba(63,79,163,.3);}
-  .tab-content{display:none;}
-  .tab-content.active{display:block;}
+/* Module switcher */
+.mod-sw{position:relative;flex-shrink:0}
+.mod-sw-btn{background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.45);
+  color:#fff;border-radius:8px;padding:.4rem 1rem;font-size:.9rem;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:.5rem;white-space:nowrap}
+.mod-sw-btn:hover{background:rgba(255,255,255,.28)}
+.mod-sw-menu{position:absolute;top:calc(100% + 6px);right:0;background:#fff;
+  border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);overflow:hidden;
+  min-width:200px;display:none;z-index:600}
+.mod-sw-menu.open{display:block}
+.mod-sw-item{display:block;width:100%;padding:.8rem 1.2rem;text-align:left;
+  border:none;background:none;font-size:.95rem;cursor:pointer;color:var(--text);
+  font-family:var(--font)}
+.mod-sw-item:hover{background:var(--gray)}
+.mod-sw-item.active{color:var(--navy);font-weight:700}
 
-  .panel{
-    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:18px;
-    box-shadow:0 1px 2px rgba(43,54,115,.04), 0 8px 24px rgba(43,54,115,.04);
-  }
-  .panel h2{margin:0 0 16px;font-size:16px;color:var(--face-dark);font-weight:700;}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  @media (max-width:640px){.grid2{grid-template-columns:1fr;}}
-  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
-  @media (max-width:760px){.grid3{grid-template-columns:1fr;}}
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
+.tabs{display:flex;background:#fff;border-bottom:2px solid #e0e4f0;
+  padding:0 1.5rem;gap:.25rem;overflow-x:auto;flex-shrink:0}
+.tab-btn{padding:.85rem 1.2rem;border:none;background:none;cursor:pointer;
+  font-size:.93rem;font-weight:600;color:#888;border-bottom:3px solid transparent;
+  white-space:nowrap;font-family:var(--font);text-decoration:none;display:flex;align-items:center}
+.tab-btn:hover{color:var(--navy)}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--navy)}
+.tab-content{display:none;padding:1.5rem}
+.tab-content.active{display:block}
 
-  label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em;}
-  input[type=date], select, input[type=text]{
-    width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);
-    font-size:14px;font-family:inherit;background:#fff;color:var(--ink);
-  }
-  .field{margin-bottom:14px;}
+/* ── Panels, cards ──────────────────────────────────────────────────────── */
+.panel{background:var(--card);border-radius:var(--radius);padding:1.25rem 1.5rem;
+  margin-bottom:1.25rem;box-shadow:var(--shadow)}
+.panel h2{font-size:1rem;color:var(--navy);margin-bottom:1rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+@media(max-width:600px){.grid3{grid-template-columns:1fr}}
+label{font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:.25rem}
+select,input[type=date]{
+  width:100%;padding:.6rem .85rem;border:1.5px solid #d0d5e8;border-radius:8px;
+  font-size:.9rem;background:#fff;font-family:var(--font);outline:none}
+select:focus,input:focus{border-color:var(--navy)}
+select:disabled,input:disabled{background:#f5f5f5;color:#aaa}
 
-  .room-card{border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
-  .room-card .room-name{font-weight:700;color:var(--face-dark);font-size:14px;}
-  .room-card .room-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+/* ── Slot grid ──────────────────────────────────────────────────────────── */
+.slot-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
+.slot{padding:.45rem .9rem;border-radius:20px;font-size:.85rem;font-weight:600;
+  cursor:pointer;border:2px solid var(--light);color:var(--navy);background:#fff;
+  transition:all .15s}
+.slot:hover,.slot.selected{background:var(--navy);color:#fff;border-color:var(--navy)}
+.slot.unavail{background:#f5f5f5;color:#bbb;border-color:#e0e0e0;cursor:default}
+#weeklyUsageBar,#weeklyUsageBarP{font-size:.82rem;color:#666;margin-bottom:.5rem;padding:.4rem .6rem;
+  background:#f0f3ff;border-radius:6px}
 
-  .slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:9px;margin-top:12px;}
-  .slot{
-    border:1.5px solid var(--border);border-radius:10px;padding:9px 6px;text-align:center;font-size:12.5px;
-    cursor:pointer;background:#fff;font-weight:700;color:var(--ink);transition:.12s;
-  }
-  .slot:hover{border-color:var(--face-navy);background:#F7F8FD;transform:translateY(-1px);}
-  .slot.selected{background:var(--face-navy);color:#fff;border-color:var(--face-navy);box-shadow:0 3px 10px rgba(63,79,163,.35);}
-  .slot.selected:hover{transform:none;}
-  .slot.taken{
-    background:#FBEAEA;color:#B23A3A;border-color:#F3CFCF;cursor:not-allowed;font-weight:600;
-  }
-  .slot.taken:hover{border-color:#F3CFCF;background:#FBEAEA;transform:none;}
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.btn{padding:.7rem 1.6rem;border:none;border-radius:8px;font-size:.95rem;
+  font-weight:600;cursor:pointer;font-family:var(--font);transition:background .15s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--dark)}
+.btn-primary:disabled{background:#aab;cursor:default}
+.btn-danger{background:var(--red);color:#fff}
+.btn-secondary{background:#e0e4f0;color:var(--navy)}
+.btn-sm{padding:.4rem .9rem;font-size:.82rem}
 
-  .legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:10px;}
-  .legend span{display:flex;align-items:center;gap:6px;}
-  .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
-  .dot.free{background:#fff;border:1px solid var(--border);}
-  .dot.busy{background:#FBEAEA;border:1px solid #F3CFCF;}
-  .dot.sel{background:var(--face-navy);}
+/* ── Calendar ───────────────────────────────────────────────────────────── */
+.week-nav{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+.week-nav button{background:var(--navy);color:#fff;border:none;border-radius:6px;
+  padding:.4rem .9rem;cursor:pointer;font-size:.9rem}
+.week-nav .week-label{font-weight:700;font-size:.95rem;color:var(--dark)}
+.cal-grid{overflow-x:auto}
+.cal-grid table{border-collapse:collapse;width:100%;min-width:540px;font-size:.82rem}
+.cal-grid th{background:var(--navy);color:#fff;padding:.5rem .4rem;text-align:center;font-weight:600}
+.cal-grid td{border:1px solid #e0e4f0;padding:.3rem .4rem;text-align:center;min-width:68px;height:28px;vertical-align:middle}
+.cal-grid td.hour-label{background:#f5f7ff;font-weight:600;color:#555;font-size:.78rem;white-space:nowrap}
+.block-busy{background:#3F4FA3;color:#fff;border-radius:4px;font-size:.75rem;padding:1px 4px;cursor:pointer}
+.block-mine{background:#27ae60;color:#fff;border-radius:4px;font-size:.75rem;padding:1px 4px;cursor:pointer}
 
-  #bookBtn{margin-top:6px;width:auto;padding:11px 26px;}
+/* ── Modal ──────────────────────────────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:center;justify-content:center;z-index:800}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:var(--radius);padding:1.75rem;
+  width:min(440px,95vw);box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.modal h3{font-size:1.1rem;color:var(--navy);margin-bottom:1rem}
+.modal .field{margin-bottom:.75rem;font-size:.9rem}
+.modal .field strong{color:var(--dark)}
+.modal-actions{display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap}
 
-  table{width:100%;border-collapse:collapse;font-size:13.5px;}
-  th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--border);}
-  td{padding:10px 10px;border-bottom:1px solid var(--border);}
-  tr:last-child td{border-bottom:none;}
-  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;}
-  .badge.ipc{background:var(--face-navy);}
-  .badge.nasdaq{background:var(--face-light);color:var(--face-dark);}
-  .cancel-link{color:var(--red);font-size:12.5px;cursor:pointer;font-weight:600;}
-  .empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0;}
+/* ── Table ──────────────────────────────────────────────────────────────── */
+.filter-row{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem}
+.filter-row input,.filter-row select{max-width:200px}
+.tbl-wrap{overflow-x:auto;border-radius:8px;box-shadow:var(--shadow)}
+table.data-tbl{width:100%;border-collapse:collapse;font-size:.85rem;background:#fff}
+table.data-tbl th{background:var(--navy);color:#fff;padding:.65rem .75rem;text-align:left;font-size:.8rem}
+table.data-tbl td{padding:.6rem .75rem;border-bottom:1px solid #e8eaf6;vertical-align:middle}
+table.data-tbl tr:last-child td{border-bottom:none}
+table.data-tbl tr:hover td{background:#f5f7ff}
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:12px;font-size:.75rem;font-weight:700}
+.badge-ipc{background:#dbe4ff;color:#3F4FA3}
+.badge-nasdaq{background:#d4edda;color:#1a7a3c}
+.badge-puesto{background:#fff3cd;color:#856404}
 
-  #toast{
-    position:fixed;bottom:24px;right:24px;background:var(--face-dark);color:#fff;padding:12px 18px;
-    border-radius:10px;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.18);display:none;z-index:100;max-width:320px;
-  }
-  #toast.error{background:var(--red);}
-  #toast.show{display:block;}
-  .spinner{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:-2px;}
-  @keyframes spin{to{transform:rotate(360deg);}}
+/* ── SVG Mapa ───────────────────────────────────────────────────────────── */
+.map-wrap{background:#f5f7ff;border-radius:12px;overflow:hidden;
+  border:1.5px solid #dbe4ff;text-align:center;padding:1rem 0}
+.map-wrap svg{max-width:100%;height:auto}
+
+/* ── Puestos form ───────────────────────────────────────────────────────── */
+.confirm-panel{background:#f5f7ff;border-radius:10px;padding:1rem;margin-top:.75rem;display:none}
+.confirm-panel.visible{display:block}
+#pEditPanel{background:#fffbe6;border:1.5px solid #ffe082;border-radius:10px;
+  padding:1rem;margin-top:.75rem;display:none}
+#pEditPanel.visible{display:block}
+
+/* ── Resumen link ───────────────────────────────────────────────────────── */
+.resumen-link{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
+  background:var(--navy);color:#fff;border-radius:8px;font-size:.85rem;
+  font-weight:600;text-decoration:none;margin-top:.5rem}
+.resumen-link:hover{background:var(--dark)}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand">
-    <div class="logo-plate"><img src="assets/face-logo-color.png" alt="FACE Financial Advisors"></div>
-    <div class="mod-sw" id="modSw">
-      <button class="mod-sw-btn" id="modSwBtn" onclick="toggleModSw()">🏢 Salas de Juntas <span class="arr">▾</span></button>
-      <div class="mod-sw-menu" id="modSwMenu">
-        <a href="index.html" class="cur">🏢 Salas de Juntas <span class="bdg">aquí</span></a>
-        <a href="puestos.html">🗂 Puestos de Trabajo</a>
-      </div>
-    </div>
-  </div>
-  <div id="userBox">
-    <button class="btn-reservar-header" id="reservarHeaderBtn" onclick="goReservar()">Reservar sala</button>
-    <div id="loggedAs" style="display:none;">Hola, <span class="name" id="userNameLabel"></span></div>
-    <button id="logoutBtn" style="display:none;" onclick="logout()">Salir</button>
-  </div>
-</header>
-
-<div id="localModeBanner" style="display:none;background:#FFF6E0;color:#8A6116;border-bottom:1px solid #F2DBA0;text-align:center;font-size:13px;padding:8px 16px;">
-  ⚠️ Modo de prueba local: las reservas solo se guardan en este navegador. Configura Google Sheets (API_URL) para que todos los asesores vean lo mismo.
+<!-- Loading -->
+<div id="loading">
+  <div class="loader"></div>
+  <div class="brand-big">FACE</div>
+  <div class="sub">Cargando sistema de reservaciones…</div>
 </div>
 
-<!-- LOGIN MODAL -->
-<div id="loginModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,24,50,.45);z-index:200;align-items:center;justify-content:center;">
-  <div class="login-card" style="position:relative;">
-    <button onclick="closeLoginModal()" style="position:absolute;top:14px;right:14px;border:none;background:none;font-size:18px;color:var(--muted);cursor:pointer;">✕</button>
-    <img src="assets/face-icon.png" alt="">
-    <h1>¿Quién eres?</h1>
-    <p>Selecciona tu nombre para identificarte y reservar una sala.</p>
-    <select id="advisorSelect">
-      <option value="">— Selecciona tu nombre —</option>
-    </select>
-    <button class="btn-primary" id="loginBtn" disabled onclick="login()">Continuar</button>
-  </div>
-</div>
-
-<!-- BOOKING MODAL (ver / editar / eliminar una reserva del calendario) -->
-<div id="bookingModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,24,50,.45);z-index:200;align-items:center;justify-content:center;">
-  <div class="login-card" style="position:relative;text-align:left;max-width:380px;">
-    <button onclick="closeBookingModal()" style="position:absolute;top:14px;right:14px;border:none;background:none;font-size:18px;color:var(--muted);cursor:pointer;">✕</button>
-    <h1 style="text-align:left;">Detalle de la reserva</h1>
-    <div id="bookingModalBody" style="font-size:13.5px;color:var(--ink);"></div>
-  </div>
-</div>
-
-<main>
-
-  <!-- APP -->
-  <div id="appScreen">
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="calendario" onclick="switchTab('calendario')">Calendario</button>
-      <button class="tab-btn" data-tab="reservar" onclick="switchTab('reservar')">Reservar sala</button>
-      <button class="tab-btn" data-tab="ver" onclick="switchTab('ver')">Lista de reservas</button>
-      <a class="tab-btn" href="resumen.html" target="_blank" style="text-decoration:none;">Resumen de hoy ↗</a>
-    </div>
-
-    <!-- TAB CALENDARIO (vista por defecto, sin login) -->
-    <div class="tab-content active" id="tab-calendario">
-      <div class="panel">
-        <div class="week-nav">
-          <div class="week-range" id="weekRangeLabel"></div>
-          <div class="week-controls">
-            <button class="week-today-btn" onclick="goToday()">Hoy</button>
-            <button class="week-arrow" onclick="shiftWeek(-7)">‹</button>
-            <button class="week-arrow" onclick="shiftWeek(7)">›</button>
-          </div>
-        </div>
-
-        <div class="cal-room-label"><span class="cal-room-dot" style="background:var(--face-navy);"></span>Sala IPC <span class="room-meta">· 8 personas · Proyector Samsung</span></div>
-        <div class="cal-grid-wrap"><table class="cal-grid" id="cal-grid-IPC"></table></div>
-
-        <div class="cal-room-label"><span class="cal-room-dot" style="background:var(--face-light);"></span>Sala NASDAQ <span class="room-meta">· 6 personas · Pantalla The Frame</span></div>
-        <div class="cal-grid-wrap"><table class="cal-grid" id="cal-grid-NASDAQ"></table></div>
-
-        <p style="font-size:12.5px;color:var(--muted);margin-top:14px;">Da click en un horario libre, o en "Reservar sala" arriba, para hacer una reservación.</p>
-      </div>
-    </div>
-
-    <!-- TAB RESERVAR -->
-    <div class="tab-content" id="tab-reservar">
-      <div class="panel">
-        <h2>1. Elige sala, fecha, duración y horario</h2>
-        <div class="grid3">
-          <div class="field">
-            <label>Sala</label>
-            <select id="roomSelectReservar">
-              <option value="IPC">Sala IPC · 8 personas · Proyector Samsung</option>
-              <option value="NASDAQ">Sala NASDAQ · 6 personas · Pantalla The Frame</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Fecha</label>
-            <input type="date" id="dateInput">
-          </div>
-          <div class="field">
-            <label>Duración</label>
-            <select id="durationSelect">
-              <option value="1">1 hora</option>
-              <option value="2">2 horas</option>
-              <option value="3">3 horas</option>
-              <option value="4">4 horas</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="weeklyUsageBar" style="display:none;margin-bottom:14px;padding:12px 16px;border-radius:10px;background:#F5F6FA;border:1px solid var(--border);font-size:13px;"></div>
-
-        <label>Horario disponible</label>
-        <div class="slot-grid" id="slotsReservar"></div>
-
-        <div class="legend">
-          <span><i class="dot free"></i>Disponible</span>
-          <span><i class="dot sel"></i>Seleccionado</span>
-          <span><i class="dot busy"></i>Ocupado</span>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h2>2. Confirma tu reserva</h2>
-        <p style="font-size:13px;color:var(--muted);margin-top:-8px;" id="selectionSummary">Selecciona un horario arriba.</p>
-        <button class="btn-primary" id="bookBtn" disabled onclick="confirmBooking()">Reservar</button>
-      </div>
-    </div>
-
-    <!-- TAB VER -->
-    <div class="tab-content" id="tab-ver">
-      <div class="panel">
-        <h2>Histórico de reservas</h2>
-        <div class="grid3">
-          <div class="field">
-            <label>Desde</label>
-            <input type="date" id="dateFromVer">
-          </div>
-          <div class="field">
-            <label>Hasta</label>
-            <input type="date" id="dateToVer">
-          </div>
-          <div class="field">
-            <label>Sala</label>
-            <select id="roomFilterVer">
-              <option value="">Todas las salas</option>
-              <option value="IPC">Sala IPC</option>
-              <option value="NASDAQ">Sala NASDAQ</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label>Asesor</label>
-          <select id="advisorFilterVer">
-            <option value="">Todos los asesores</option>
-          </select>
-        </div>
-        <button class="week-today-btn" style="margin-bottom:14px;" onclick="clearVerFilters()">Limpiar filtros</button>
-        <table>
-          <thead><tr><th>Fecha</th><th>Sala</th><th>Horario</th><th>Asesor</th><th></th></tr></thead>
-          <tbody id="bookingsTableBody"></tbody>
-        </table>
-        <div class="empty" id="bookingsEmpty" style="display:none;">No hay reservas con esos filtros.</div>
-      </div>
-    </div>
-  </div>
-
-</main>
-
+<!-- Toast -->
 <div id="toast"></div>
 
+<!-- Login -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <div class="brand">FACE <span>IPC</span></div>
+    <p>Sistema de reservaciones — CDMX</p>
+    <label for="loginSelect">Selecciona tu nombre</label>
+    <select id="loginSelect"><option value="">— Cargando asesores… —</option></select>
+    <button onclick="doLogin()">Ingresar</button>
+  </div>
+</div>
+
+<!-- Booking detail modal (Salas) -->
+<div class="modal-overlay" id="bookModal">
+  <div class="modal">
+    <h3 id="bmTitle">Detalle de reserva</h3>
+    <div id="bmBody"></div>
+    <div class="modal-actions" id="bmActions"></div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="closeModal('bookModal')">Cerrar</button>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="brand">FACE <span>IPC</span></div>
+  <div class="user-pill" id="userPill">—</div>
+  <div class="spacer"></div>
+  <div class="mod-sw" id="modSw">
+    <button class="mod-sw-btn" onclick="toggleModSw()">
+      <span id="modSwLabel">🏢 Salas de Juntas</span> <span>▾</span>
+    </button>
+    <div class="mod-sw-menu" id="modSwMenu">
+      <button class="mod-sw-item active" id="msItemSalas" onclick="switchModule('salas')">🏢 Salas de Juntas</button>
+      <button class="mod-sw-item" id="msItemPuestos" onclick="switchModule('puestos')">🗂 Puestos de Trabajo</button>
+    </div>
+  </div>
+  <button class="logout-btn" onclick="doLogout()">Salir</button>
+</header>
+
+<!-- ═══════════════════ MÓDULO SALAS ════════════════════════════════════════ -->
+<div id="modSalas">
+  <div class="tabs" id="salasTabs">
+    <button class="tab-btn active" data-tab="calendario" onclick="switchSalasTab('calendario')">Calendario</button>
+    <button class="tab-btn" data-tab="reservar" onclick="switchSalasTab('reservar')">Reservar sala</button>
+    <button class="tab-btn" data-tab="ver" onclick="switchSalasTab('ver')">Lista de reservas</button>
+    <a class="tab-btn" href="resumen.html?m=salas" target="_blank">Resumen de hoy ↗</a>
+  </div>
+
+  <!-- Calendario -->
+  <div class="tab-content active" id="s-tab-calendario">
+    <div class="panel">
+      <div class="week-nav">
+        <button onclick="changeWeek(-1)">‹ Anterior</button>
+        <span class="week-label" id="weekLabel">—</span>
+        <button onclick="changeWeek(1)">Siguiente ›</button>
+      </div>
+      <div style="margin-bottom:1rem">
+        <label>Sala</label>
+        <select id="calRoomFilter" onchange="loadCalendar()" style="max-width:220px">
+          <option value="IPC">Sala IPC (8 pers.)</option>
+          <option value="NASDAQ">Sala NASDAQ (6 pers.)</option>
+        </select>
+      </div>
+      <div class="cal-grid" id="calGrid"><p style="color:#999">Cargando…</p></div>
+    </div>
+  </div>
+
+  <!-- Reservar -->
+  <div class="tab-content" id="s-tab-reservar">
+    <div class="panel">
+      <h2>1. Elige sala, fecha, duración y horario</h2>
+      <div class="grid3">
+        <div>
+          <label>Sala</label>
+          <select id="roomSelectReservar" onchange="loadSlots()">
+            <option value="IPC">Sala IPC (8 pers. · Samsung)</option>
+            <option value="NASDAQ">Sala NASDAQ (6 pers. · The Frame)</option>
+          </select>
+        </div>
+        <div>
+          <label>Fecha</label>
+          <input type="date" id="dateInput" onchange="loadSlots()">
+        </div>
+        <div>
+          <label>Duración</label>
+          <select id="durationSelect" onchange="loadSlots()">
+            <option value="1">1 hora</option>
+            <option value="2">2 horas</option>
+            <option value="3">3 horas</option>
+            <option value="4">4 horas</option>
+          </select>
+        </div>
+      </div>
+      <div id="weeklyUsageBar"></div>
+      <div class="slot-grid" id="slotsReservar"><p style="color:#999;font-size:.85rem">Elige sala y fecha</p></div>
+    </div>
+    <div class="panel" id="confirmPanel" style="display:none">
+      <h2>2. Confirma tu reserva</h2>
+      <p id="selectionSummary" style="margin-bottom:1rem;font-size:.95rem"></p>
+      <button class="btn btn-primary" id="bookBtn" onclick="confirmBooking()">Reservar</button>
+    </div>
+  </div>
+
+  <!-- Lista salas -->
+  <div class="tab-content" id="s-tab-ver">
+    <div class="panel">
+      <h2>Filtros</h2>
+      <div class="filter-row">
+        <div><label>Desde</label><input type="date" id="dateFromVer" onchange="loadTable()"></div>
+        <div><label>Hasta</label><input type="date" id="dateToVer" onchange="loadTable()"></div>
+        <div><label>Sala</label>
+          <select id="roomFilterVer" onchange="loadTable()">
+            <option value="">Todas</option><option value="IPC">IPC</option><option value="NASDAQ">NASDAQ</option>
+          </select>
+        </div>
+        <div><label>Asesor</label>
+          <select id="advisorFilterVer" onchange="loadTable()">
+            <option value="">Todos</option><option value="__mine__">Mis reservas</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="data-tbl">
+          <thead><tr><th>Sala</th><th>Fecha</th><th>Hora inicio</th><th>Hora fin</th><th>Asesor</th><th>Acciones</th></tr></thead>
+          <tbody id="bookingsTableBody"><tr><td colspan="6" style="text-align:center;color:#999">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+      <div style="margin-top:1rem">
+        <a class="resumen-link" href="resumen.html?m=salas" target="_blank">📺 Resumen de hoy ↗</a>
+      </div>
+    </div>
+  </div>
+</div><!-- /modSalas -->
+
+<!-- ═══════════════════ MÓDULO PUESTOS ══════════════════════════════════════ -->
+<div id="modPuestos" style="display:none">
+  <div class="tabs" id="puestosTabs">
+    <button class="tab-btn active" data-tab="mapa" onclick="switchPuestosTab('mapa')">Mapa de puestos</button>
+    <button class="tab-btn" data-tab="reservar" onclick="switchPuestosTab('reservar')">Reservar puesto</button>
+    <button class="tab-btn" data-tab="lista" onclick="switchPuestosTab('lista')">Lista de reservas</button>
+    <a class="tab-btn" href="resumen.html?m=puestos" target="_blank">Resumen de hoy ↗</a>
+  </div>
+
+  <!-- Mapa -->
+  <div class="tab-content active" id="p-tab-mapa">
+    <div class="panel">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
+        <h2 style="margin:0">Disponibilidad de puestos</h2>
+        <div>
+          <label style="display:inline;margin-right:.4rem">Fecha</label>
+          <input type="date" id="mapDateP" onchange="refreshMap()" style="width:auto;display:inline-block">
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="refreshMap()">Actualizar</button>
+      </div>
+      <div class="map-wrap" id="mapWrap"></div>
+      <div style="display:flex;gap:1rem;margin-top:.75rem;font-size:.8rem;flex-wrap:wrap">
+        <span>⬜ Disponible</span>
+        <span style="color:var(--green)">🟩 Tu reserva</span>
+        <span style="color:var(--navy)">🟦 Ocupado</span>
+        <span style="color:#aaa">⬛ No disponible</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reservar puesto -->
+  <div class="tab-content" id="p-tab-reservar">
+    <div class="panel">
+      <h2>1. Selecciona puesto y fecha</h2>
+      <div class="grid3">
+        <div>
+          <label>Puesto</label>
+          <select id="puestoSelect" onchange="onPuestoOrDateChange()">
+            <option value="">— Elige puesto —</option>
+          </select>
+        </div>
+        <div>
+          <label>Fecha</label>
+          <input type="date" id="rDate" onchange="onPuestoOrDateChange()">
+        </div>
+        <div>
+          <label>Hora de inicio</label>
+          <select id="horaInicio" onchange="onHoraInicioChange()">
+            <option value="">— Elige inicio —</option>
+          </select>
+        </div>
+      </div>
+      <div id="weeklyUsageBarP"></div>
+    </div>
+    <div class="panel" id="pFinPanel" style="display:none">
+      <h2>2. Hora de fin</h2>
+      <div style="max-width:220px">
+        <label>Hora de fin</label>
+        <select id="horaFin" onchange="onHoraFinChange()">
+          <option value="">— Elige fin —</option>
+        </select>
+      </div>
+      <div class="confirm-panel" id="pConfirmPanel">
+        <strong>Resumen:</strong> <span id="pSummary"></span>
+        <br><br>
+        <button class="btn btn-primary" onclick="confirmBookingP()">Reservar</button>
+      </div>
+      <div id="pEditPanel">
+        <strong>Editar reserva</strong>
+        <p id="pEditInfo" style="margin:.5rem 0;font-size:.88rem;color:#666"></p>
+        <button class="btn btn-primary btn-sm" onclick="submitEditP()">Guardar cambios</button>
+        <button class="btn btn-secondary btn-sm" onclick="cancelEditP()" style="margin-left:.5rem">Cancelar edición</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista puestos -->
+  <div class="tab-content" id="p-tab-lista">
+    <div class="panel">
+      <h2>Filtros</h2>
+      <div class="filter-row">
+        <div><label>Desde</label><input type="date" id="pDateFrom" onchange="loadTableP()"></div>
+        <div><label>Hasta</label><input type="date" id="pDateTo" onchange="loadTableP()"></div>
+        <div><label>Puesto</label>
+          <select id="pPuestoFilter" onchange="loadTableP()">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div><label>Asesor</label>
+          <select id="pAdvisorFilter" onchange="loadTableP()">
+            <option value="">Todos</option><option value="__mine__">Mis reservas</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="data-tbl">
+          <thead><tr><th>Puesto</th><th>Fecha</th><th>Hora inicio</th><th>Hora fin</th><th>Asesor</th><th>Acciones</th></tr></thead>
+          <tbody id="pTableBody"><tr><td colspan="6" style="text-align:center;color:#999">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+      <div style="margin-top:1rem">
+        <a class="resumen-link" href="resumen.html?m=puestos" target="_blank">📺 Resumen de puestos ↗</a>
+      </div>
+    </div>
+  </div>
+</div><!-- /modPuestos -->
+
 <script>
-/* ====== CONFIGURACIÓN ====== */
-// Pega aquí la URL de tu Web App de Google Apps Script (ver instrucciones en AppsScript_code.gs).
-const API_URL = "https://script.google.com/macros/s/AKfycbzn97PY2IowALy3LB4SF9yjwREPiwt8SCYk_k53IYB3Exxq1tLakSFatu8U0PdqM6ORbA/exec";
+// ── Config ─────────────────────────────────────────────────────────────────
+const API_URL='https://script.google.com/macros/s/AKfycbzn97PY2IowALy3LB4SF9yjwREPiwt8SCYk_k53IYB3Exxq1tLakSFatu8U0PdqM6ORbA/exec';
+const ROOMS={IPC:{label:'Sala IPC',cap:'8 pers.',tv:'Samsung'},NASDAQ:{label:'Sala NASDAQ',cap:'6 pers.',tv:'The Frame'}};
+const START_HOUR=7, END_HOUR=22;
+const DESK_W=80, DESK_H=72;
+const DESK_POS={
+  P1:{x:140,y:430},P2:{x:140,y:350},P3:{x:140,y:270},P4:{x:140,y:190},
+  P5:{x:228,y:430},P6:{x:228,y:350},P7:{x:228,y:270},P8:{x:228,y:190},
+  P9:{x:445,y:430},P10:{x:445,y:350},P11:{x:445,y:270},P12:{x:445,y:190},
+  P13:{x:533,y:430},P14:{x:533,y:350},P15:{x:533,y:270},P16:{x:533,y:190}
+};
 
-// Mientras no se configure API_URL, el sitio funciona en modo de prueba local
-// (guarda las reservas en este navegador con localStorage) para poder probar el flujo completo.
-const LOCAL_MODE = API_URL.indexOf("PEGA_AQUI") !== -1;
-const LOCAL_KEY = "face_bookings_local";
+// ── Utilidades ──────────────────────────────────────────────────────────────
+function pad2(n){return String(n).padStart(2,'0')}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function normalizeName(s){return(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim()}
+function safeGet(k){try{return localStorage.getItem(k)}catch{return null}}
+function safeSet(k,v){try{localStorage.setItem(k,v)}catch{}}
+function safeRemove(k){try{localStorage.removeItem(k)}catch{}}
+function fmtDate(s){
+  if(!s)return '';
+  const [y,m,d]=s.split('-');
+  const mn=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${d} ${mn[parseInt(m,10)-1]} ${y}`;
+}
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=err?'err':'';
+  void t.offsetWidth; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3800);
+}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+async function apiGet(p){const r=await fetch(API_URL+'?'+new URLSearchParams(p));return r.json()}
+async function apiPost(b){const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return r.json()}
 
-// Acceso seguro a localStorage: algunos navegadores (Safari, vistas en sandbox)
-// bloquean localStorage para archivos abiertos con file:// y lanzan SecurityError.
-function safeGet(key){
-  try{ return localStorage.getItem(key); }catch(e){ return null; }
-}
-function safeSet(key, value){
-  try{ localStorage.setItem(key, value); return true; }catch(e){ return false; }
-}
-function safeRemove(key){
-  try{ localStorage.removeItem(key); }catch(e){}
-}
-
-function localGetAll(){
-  try{ return JSON.parse(safeGet(LOCAL_KEY)) || []; }catch(e){ return []; }
-}
-function localSaveAll(list){
-  return safeSet(LOCAL_KEY, JSON.stringify(list));
-}
-function rangesOverlap(aStart, aEnd, bStart, bEnd){
-  return aStart < bEnd && bStart < aEnd;
-}
-
-// Lista de asesores cargada dinámicamente desde la hoja "Asesores" del backend.
-// Se llena en initAdvisors() al arrancar la app.
-// Cada entrada: { nombre, activo, esAdmin, limiteHoras }
-let advisorsData = [];
-
-// Fallback local para LOCAL_MODE o si el fetch falla antes de cargar
-const ADVISORS_FALLBACK = [
-  "Alejandro Argüelles Gonzalez","Alejandro Martinez Romero","Alejandro Sánchez Barbara",
-  "Alejandro Tapia Castillo","Alberto Baigts Cadeño","Alberto Cortes Bolio",
-  "Amairani Pamela Merino Rios","Andres Hoyos Morales","Arturo Rodríguez Muraira",
-  "Carlos Alberto Duarte Morales","Eduardo Giralt Dominguez","Elisa Islas Diaz de León",
-  "Erick Omar Villegas Jiménez","Ferdinando Santiago Hoyos","Germán González Cantón",
-  "Hector Joaquin Lopez Osorio","Jonathan Alexis Bojorquez Ruelas","Jorge García Granados",
-  "Jorge Roberto Rivera Medrano","Jose Abraham Grafias","Jose Pablo Flores Rabasa",
-  "Juan Carlos Alonso","Juan Carlos Zacarias","Julian Cardona",
-  "Laura Quintero","Lawrence Eden Anaya","Luis Guillermo Garcia Dueñas Cobarruvias",
-  "Marco Antonio Olivas Betancourt","Maria Clara Cuenca De La Concha",
-  "Maria de Lourdes Koloffon Lara","Maria de Lourdes Pastor Farril",
-  "Maria del Rocio Alonso Martinez","Maria Rosalia Jimenez Ortega",
-  "Mario Alejandro Gongora Rivera","Mauricio Garza Castro","Moises Arres Muñiz",
-  "Pablo Noriega Bello","Paula Yolanda Diaz Herrera","Ramón Alejandro González Vega",
-  "Sofia Mejorada Perez Verdia"
-];
-
-const ROOMS = [
-  {id:"IPC", label:"Sala IPC", cap:8, equip:"Proyector Samsung"},
-  {id:"NASDAQ", label:"Sala NASDAQ", cap:6, equip:"Pantalla The Frame"}
-];
-
-/** Quita acentos y pasa a minúsculas para comparar nombres sin importar tildes. */
-function normalizeName(s){
-  return String(s).trim().toLowerCase()
-    .replace(/[áàäâ]/g,'a').replace(/[éèëê]/g,'e')
-    .replace(/[íìïî]/g,'i').replace(/[óòöô]/g,'o')
-    .replace(/[úùüû]/g,'u').replace(/ñ/g,'n');
-}
-function findAdvisor(name){
-  const n = normalizeName(name);
-  return advisorsData.find(a => normalizeName(a.nombre) === n) || null;
-}
+// ── Estado global ───────────────────────────────────────────────────────────
+let currentUser=null, advisorsData=[], puestosConfig=[], currentModule='salas';
 
 function isAdmin(name){
-  const rec = findAdvisor(name);
-  return rec ? rec.esAdmin : false;
+  const a=advisorsData.find(x=>normalizeName(x.nombre)===normalizeName(name));
+  return !!(a?.esAdmin);
 }
-
-function getAdvisorLimit(name){
-  const rec = findAdvisor(name);
-  return rec ? (rec.limiteHoras || 999) : 999;
-}
-
-// Caché de semana para no llamar al API en cada cambio de selector
-let _weekUsageCache = { wStart: null, data: [] };
-
-/** Horas reservadas por el asesor en la semana que contiene `dateStr`.
- *  Siempre consulta el API (con caché por semana) para tener el dato exacto. */
-async function getWeeklyUsed(advisor, dateStr){
-  const d = new Date((dateStr||todayStr()) + 'T12:00:00');
-  const day = d.getDay();
-  const diff = day===0 ? -6 : 1-day;
-  const monday = new Date(d); monday.setDate(d.getDate()+diff);
-  const wStart = toDateStr(monday);
-
-  // Solo va al API si la semana cambió
-  if(_weekUsageCache.wStart !== wStart){
-    const days = Array.from({length:7}, (_,i)=>{
-      const dd = new Date(monday); dd.setDate(monday.getDate()+i); return toDateStr(dd);
-    });
-    try{
-      const results = await Promise.all(days.map(d=>apiGet(d)));
-      _weekUsageCache = { wStart, data: results.flat() };
-    }catch(e){
-      // Si falla el API, usa el caché de calendario como respaldo
-      _weekUsageCache = { wStart, data: [...(weekBookingsCache||[])] };
-    }
-  }
-
-  const seen = new Set();
-  return _weekUsageCache.data.reduce((sum, b)=>{
-    if(seen.has(b.id)) return sum;
-    if(normalizeName(b.advisor)!==normalizeName(advisor)) return sum;
-    seen.add(b.id);
-    return sum + Math.max(1, b.duration||1);
-  }, 0);
-}
-
-/** Devuelve true si la reserva ya comenzó (o ya pasó). */
-function isBookingPast(booking){
-  const [y,m,day] = booking.date.split('-').map(Number);
-  const h = parseInt(booking.time.split(':')[0], 10);
-  return new Date(y, m-1, day, h, 0, 0) < new Date();
-}
-
-/** Devuelve true si el usuario puede cancelar esta reserva
- *  (es suya o admin, la reserva es futura, y faltan más de 2h). */
-function canCancelBooking(booking, user){
-  if(!user) return false;
-  if(isBookingPast(booking)) return false; // pasada: nadie puede cancelar
-  const admin = isAdmin(user);
-  const owner = booking.advisor===user;
-  if(!owner && !admin) return false;
-  if(admin) return true; // admin puede cancelar futuras sin límite de 2h
-  // No-admin: debe faltar más de 2h
-  const [y,m,day] = booking.date.split('-').map(Number);
-  const h = parseInt(booking.time.split(':')[0], 10);
-  const diffMs = new Date(y, m-1, day, h, 0, 0) - new Date();
-  return diffMs >= 2*60*60*1000;
-}
-
-/** Devuelve true si el usuario puede editar la duración de esta reserva
- *  (es suya o admin, y la reserva aún no ha comenzado). */
-function canEditBooking(booking, user){
-  if(!user) return false;
-  if(isBookingPast(booking)) return false; // pasada: nadie puede editar
-  const admin = isAdmin(user);
-  const owner = booking.advisor===user;
-  return owner || admin;
-}
-
-async function updateWeeklyUsageBar(date){
-  const bar = document.getElementById('weeklyUsageBar');
-  if(!currentUser){ bar.style.display='none'; return; }
-  const limit = getAdvisorLimit(currentUser);
-  const used  = await getWeeklyUsed(currentUser, date||todayStr());
-  const pct   = Math.min(100, Math.round(used/limit*100));
-  const over  = used>=limit;
-  const color = over ? 'var(--red)' : used/limit>=0.8 ? '#D97706' : 'var(--green)';
-  bar.style.display = 'block';
-  bar.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <span style="font-weight:700;color:${color};">${over ? '⚠️ Límite semanal alcanzado' : `Horas esta semana: ${used} / ${limit}`}</span>
-      <span style="font-size:12px;color:var(--muted);">${pct}% usado</span>
-    </div>
-    <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
-      <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:.3s;"></div>
-    </div>
-    ${over ? '<p style="margin:8px 0 0;font-size:12px;color:var(--red);">Contacta al área directiva para que te asignen más horas esta semana.</p>' : ''}
-  `;
-}
-
-/** Obtiene la lista de asesores del backend y puebla el dropdown de login. */
-async function initAdvisors(){
-  let list = [];
-  if(!LOCAL_MODE){
-    try{
-      const res = await fetch(`${API_URL}?action=advisors`);
-      if(res.ok){
-        const parsed = await res.json();
-        // Solo aceptar si es un array válido con datos
-        if(Array.isArray(parsed) && parsed.length > 0) list = parsed;
-      }
-    }catch(e){
-      console.warn('initAdvisors: fetch falló, usando lista local.', e);
-    }
-  }
-
-  // Fallback si no llegaron datos del backend
-  if(list.length === 0){
-    list = ADVISORS_FALLBACK.map(n=>({
-      nombre: n, activo: true,
-      esAdmin: ["Ferdinando Santiago Hoyos","Pablo Noriega Bello","Germán González Cantón"].includes(n),
-      limiteHoras: 999
-    }));
-  }
-
-  advisorsData = list;
-
-  const active = list
-    .filter(a => a.activo)
-    .sort((a,b) => a.nombre.localeCompare(b.nombre,'es'));
-
-  // Dropdown de login
-  const sel = document.getElementById('advisorSelect');
-  if(sel){
-    while(sel.options.length > 1) sel.remove(1);
-    active.forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.nombre; opt.textContent = a.nombre;
-      sel.appendChild(opt);
-    });
-  }
-
-  // Filtro de asesor en Lista de Reservas
-  const advisorFilter = document.getElementById('advisorFilterVer');
-  if(advisorFilter){
-    while(advisorFilter.options.length > 1) advisorFilter.remove(1);
-    active.forEach(a => {
-      const opt = document.createElement('option');
-      opt.value = a.nombre; opt.textContent = a.nombre;
-      advisorFilter.appendChild(opt);
-    });
-  }
-}
-
-// Horario de operación: las 24 horas del día, slots de 1 hora (00:00 a 23:00).
-const START_HOUR = 0, END_HOUR = 24;
-
-let currentUser = null;
-let selection = {room:null, time:null, duration:null};
-let bookingsCache = [];
-let weekBookingsCache = [];
-let pendingTabAfterLogin = null;
-let weekAnchor = new Date(); // ancla para la vista de calendario semanal
-
-/* ====== INIT ====== */
-function todayStr(){
-  const d = new Date();
+function getMaxBookingDate(){
+  if(!currentUser||isAdmin(currentUser))return null;
+  const d=new Date(); d.setMonth(d.getMonth()+1);
   return d.toISOString().slice(0,10);
 }
-function toDateStr(d){
-  return d.toISOString().slice(0,10);
+function validateDateLimit(dateStr){
+  const max=getMaxBookingDate();
+  if(max&&dateStr>max){
+    showToast(`Solo puedes reservar hasta el ${max}. Los administradores pueden programar sin límite.`,true);
+    return false;
+  }
+  return true;
 }
-
-window.addEventListener('DOMContentLoaded', async ()=>{
-  // Cargar lista de asesores desde el backend (o fallback local)
-  await initAdvisors();
-
-  const sel = document.getElementById('advisorSelect');
-  sel.addEventListener('change', ()=>{
-    document.getElementById('loginBtn').disabled = !sel.value;
+function setDateInputLimits(){
+  const max=getMaxBookingDate(), today=todayStr();
+  ['dateInput','rDate'].forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    el.min=today;
+    if(max)el.max=max; else el.removeAttribute('max');
   });
-
-  if(LOCAL_MODE){
-    document.getElementById('localModeBanner').style.display='block';
-  }
-
-  const saved = safeGet('face_advisor');
-  if(saved){
-    // Verificar que el asesor guardado siga activo en la hoja
-    const rec = advisorsData.find(a=>a.nombre===saved);
-    if(rec && rec.activo){
-      currentUser = saved;
-      setLoggedInHeader();
-    } else if(rec && !rec.activo){
-      safeRemove('face_advisor');
-      showToast('Tu acceso ha sido desactivado. Contacta a un administrador.', true);
-    } else {
-      currentUser = saved; // asesor no encontrado en el directorio (modo offline), igual se deja
-      setLoggedInHeader();
-    }
-  }
-
-  document.getElementById('dateInput').value = todayStr();
-  document.getElementById('dateInput').addEventListener('change', loadSlots);
-  document.getElementById('roomSelectReservar').addEventListener('change', loadSlots);
-  document.getElementById('durationSelect').addEventListener('change', loadSlots);
-
-  document.getElementById('dateFromVer').addEventListener('change', loadTable);
-  document.getElementById('dateToVer').addEventListener('change', loadTable);
-  document.getElementById('roomFilterVer').addEventListener('change', loadTable);
-  document.getElementById('advisorFilterVer').addEventListener('change', loadTable);
-
-  loadCalendar();
-
-  // Handle ?sala=IPC/NASDAQ and ?tab=reservar from puestos.html links
-  const params = new URLSearchParams(location.search);
-  const tabParam  = params.get('tab');
-  const salaParam = params.get('sala');
-  if(tabParam==='reservar' && salaParam){
-    const roomSel = document.getElementById('roomSelectReservar');
-    if(roomSel && [...roomSel.options].some(o=>o.value===salaParam)){
-      roomSel.value = salaParam;
-    }
-    if(currentUser){ switchTab('reservar'); }
-    else { pendingTabAfterLogin = 'reservar'; openLoginModal(); }
-  }
-});
-
-function setLoggedInHeader(){
-  document.getElementById('reservarHeaderBtn').textContent = 'Reservar sala';
-  document.getElementById('loggedAs').style.display = 'block';
-  document.getElementById('logoutBtn').style.display = 'inline-block';
-  document.getElementById('userNameLabel').textContent = currentUser;
+  const m=document.getElementById('mapDateP');
+  if(m)m.min=today;
 }
 
-function goReservar(){
-  if(!currentUser){
-    pendingTabAfterLogin = 'reservar';
-    openLoginModal();
-    return;
-  }
-  switchTab('reservar');
-}
-
-function toggleModSw(){
-  document.getElementById('modSwBtn').classList.toggle('open');
-  document.getElementById('modSwMenu').classList.toggle('open');
-}
-document.addEventListener('click', e=>{
-  const sw = document.getElementById('modSw');
-  if(sw && !sw.contains(e.target)){
-    document.getElementById('modSwBtn').classList.remove('open');
+// ── Module switcher ─────────────────────────────────────────────────────────
+function toggleModSw(){document.getElementById('modSwMenu').classList.toggle('open')}
+document.addEventListener('click',e=>{
+  if(!document.getElementById('modSw').contains(e.target))
     document.getElementById('modSwMenu').classList.remove('open');
-  }
 });
-
-function openLoginModal(){
-  document.getElementById('loginModalOverlay').style.display = 'flex';
-}
-function closeLoginModal(){
-  document.getElementById('loginModalOverlay').style.display = 'none';
-  pendingTabAfterLogin = null;
-}
-
-function login(){
-  const sel = document.getElementById('advisorSelect');
-  if(!sel.value) return;
-  currentUser = sel.value;
-  safeSet('face_advisor', currentUser);
-  setLoggedInHeader();
-  document.getElementById('loginModalOverlay').style.display = 'none';
-  if(pendingTabAfterLogin){
-    switchTab(pendingTabAfterLogin);
-    pendingTabAfterLogin = null;
-  }
-}
-function logout(){
-  safeRemove('face_advisor');
-  currentUser = null;
-  document.getElementById('reservarHeaderBtn').textContent = 'Reservar sala';
-  document.getElementById('loggedAs').style.display = 'none';
-  document.getElementById('logoutBtn').style.display = 'none';
-  switchTab('calendario');
+function switchModule(m){
+  currentModule=m;
+  document.getElementById('modSalas').style.display=m==='salas'?'':'none';
+  document.getElementById('modPuestos').style.display=m==='puestos'?'':'none';
+  document.getElementById('modSwLabel').textContent=m==='salas'?'🏢 Salas de Juntas':'🗂 Puestos de Trabajo';
+  document.getElementById('msItemSalas').classList.toggle('active',m==='salas');
+  document.getElementById('msItemPuestos').classList.toggle('active',m==='puestos');
+  document.getElementById('modSwMenu').classList.remove('open');
+  history.replaceState(null,'',`?m=${m}`);
+  if(m==='puestos')initPuestosModule();
+  else loadCalendar();
 }
 
-function switchTab(tab){
-  if((tab==='reservar') && !currentUser){
-    pendingTabAfterLogin = 'reservar';
-    openLoginModal();
-    return;
-  }
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  if(tab==='ver') loadTable();
-  if(tab==='reservar') loadSlots();
-  if(tab==='calendario') loadCalendar();
+// ── Login ───────────────────────────────────────────────────────────────────
+async function initAdvisors(){
+  try{
+    const data=await apiGet({action:'advisors'});
+    if(data.advisors){
+      advisorsData=data.advisors;
+      const sel=document.getElementById('loginSelect');
+      sel.innerHTML='<option value="">— Selecciona tu nombre —</option>';
+      data.advisors.filter(a=>a.activo).sort((a,b)=>a.nombre.localeCompare(b.nombre))
+        .forEach(a=>{const o=document.createElement('option');o.value=a.nombre;o.textContent=a.nombre;sel.appendChild(o);});
+    }
+  }catch(e){console.error(e);}
+}
+function doLogin(){
+  const sel=document.getElementById('loginSelect'), name=sel.value.trim();
+  if(!name){showToast('Selecciona tu nombre para ingresar.',true);return;}
+  currentUser=name; safeSet('face_advisor',name);
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('userPill').textContent=name;
+  setDateInputLimits(); onAfterLogin();
+}
+function doLogout(){
+  currentUser=null; safeRemove('face_advisor');
+  document.getElementById('loginOverlay').style.display='flex';
+  document.getElementById('userPill').textContent='—';
+}
+function onAfterLogin(){
+  const m=new URLSearchParams(location.search).get('m');
+  if(m==='puestos')switchModule('puestos'); else switchModule('salas');
 }
 
-/* ====== CALENDARIO SEMANAL (vista pública, sin login) - grilla hora x día ====== */
-const DOW = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-const MONTHS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+// ══════════════════════ SALAS ════════════════════════════════════════════════
 
-function startOfWeek(d){
-  const date = new Date(d);
-  const day = date.getDay(); // 0=Dom
-  const diff = day === 0 ? -6 : 1 - day; // semana inicia en Lunes
-  date.setDate(date.getDate() + diff);
-  return date;
+let salasCurrentTab='calendario';
+function switchSalasTab(tab){
+  salasCurrentTab=tab;
+  document.querySelectorAll('#salasTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('#modSalas .tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('s-tab-'+tab).classList.add('active');
+  if(tab==='calendario')loadCalendar();
+  if(tab==='ver'){loadTable();populateAdvisorFilter();}
 }
 
-function goToday(){
-  weekAnchor = new Date();
-  loadCalendar();
+// Calendario
+let calWeekOffset=0;
+function getWeekDates(off=0){
+  const d=new Date(); d.setDate(d.getDate()-d.getDay()+1+off*7);
+  return Array.from({length:7},(_,i)=>{const dd=new Date(d);dd.setDate(d.getDate()+i);return dd.toISOString().slice(0,10)});
 }
-
-function shiftWeek(days){
-  weekAnchor.setDate(weekAnchor.getDate()+days);
-  loadCalendar();
-}
-
-function shortName(advisor){
-  const parts = advisor.trim().split(/\s+/);
-  if(parts.length===1) return parts[0];
-  return parts[0] + ' ' + parts[1].charAt(0) + '.';
-}
-
+function changeWeek(dir){calWeekOffset+=dir;loadCalendar();}
 async function loadCalendar(){
-  const start = startOfWeek(weekAnchor);
-  const days = [];
-  for(let i=0;i<7;i++){
-    const d = new Date(start);
-    d.setDate(start.getDate()+i);
-    days.push(d);
-  }
-
-  const endLabel = new Date(start); endLabel.setDate(start.getDate()+6);
-  document.getElementById('weekRangeLabel').textContent =
-    `${start.getDate()} – ${endLabel.getDate()} ${MONTHS[endLabel.getMonth()]} ${endLabel.getFullYear()}`;
-
-  let weekBookings = [];
+  if(salasCurrentTab!=='calendario')return;
+  const room=document.getElementById('calRoomFilter').value;
+  const days=getWeekDates(calWeekOffset);
+  document.getElementById('weekLabel').textContent=`${fmtDate(days[0])} — ${fmtDate(days[6])}`;
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='<p style="color:#999">Cargando…</p>';
   try{
-    const results = await Promise.all(days.map(d=>apiGet(toDateStr(d))));
-    weekBookings = results.flat();
-  }catch(e){
-    showToast('No se pudo cargar el calendario.', true);
-  }
-  weekBookingsCache = weekBookings;
-
-  ROOMS.forEach(r=>renderCalGrid(r.id, days, weekBookings));
+    const bookings=[];
+    await Promise.all(days.map(async d=>{
+      const data=await apiGet({date:d});
+      (data.bookings||[]).filter(b=>b.room===room).forEach(b=>bookings.push(b));
+    }));
+    grid.innerHTML=renderCalGrid(days,bookings);
+  }catch{grid.innerHTML='<p style="color:red">Error al cargar</p>';}
 }
-
-function buildRoomMatrix(roomId, days, weekBookings){
-  const totalHours = END_HOUR - START_HOUR;
-  const matrix = [];
-  for(let hi=0; hi<totalHours; hi++) matrix.push(new Array(days.length).fill(null));
-
-  days.forEach((d, di)=>{
-    const dStr = toDateStr(d);
-    weekBookings
-      .filter(b=>b.room===roomId && b.date===dStr)
-      .forEach(b=>{
-        const startH = parseInt(b.time.split(':')[0],10);
-        const span = Math.max(1, b.duration||1);
-        const startIdx = startH - START_HOUR;
-        if(startIdx<0 || startIdx>=totalHours) return;
-        const clippedSpan = Math.min(span, totalHours-startIdx);
-        matrix[startIdx][di] = {booking:b, span:clippedSpan};
-        for(let k=1;k<clippedSpan;k++){
-          matrix[startIdx+k][di] = 'covered';
-        }
-      });
-  });
-  return matrix;
-}
-
-function renderCalGrid(roomId, days, weekBookings){
-  const table = document.getElementById('cal-grid-'+roomId);
-  const todayS = todayStr();
-  const matrix = buildRoomMatrix(roomId, days, weekBookings);
-  const cls = roomId==='NASDAQ' ? ' room-nasdaq' : '';
-
-  let html = '<thead><tr><th></th>';
-  days.forEach(d=>{
-    const dStr = toDateStr(d);
-    html += `<th class="${dStr===todayS?'is-today':''}"><span class="wd">${DOW[d.getDay()]}</span><span class="dd">${d.getDate()}</span></th>`;
-  });
-  html += '</tr></thead><tbody>';
-
-  for(let h=START_HOUR; h<END_HOUR; h++){
-    const hi = h - START_HOUR;
-    const time = hourLabel(h);
-    html += `<tr><td class="hour-col">${time}</td>`;
-    days.forEach((d, di)=>{
-      const cell = matrix[hi][di];
-      if(cell === 'covered') return; // ya cubierto por el rowspan de la hora de inicio
-      if(cell && cell.booking){
-        const b = cell.booking;
-        const startH = parseInt(b.time.split(':')[0],10);
-        const endLabel = hourLabel(Math.min(startH + (b.duration||1), END_HOUR));
-        html += `<td rowspan="${cell.span}"><div class="cal-booking${cls}" onclick="openBookingModal('${b.id}')" title="${b.advisor} · ${b.time}-${endLabel}">${shortName(b.advisor)}</div></td>`;
-      } else {
-        const dStr = toDateStr(d);
-        html += `<td><div class="cal-cell-free" onclick="calCellClick('${roomId}','${dStr}','${time}')"></div></td>`;
-      }
+function renderCalGrid(days,bookings){
+  const dn=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  let h=`<table><thead><tr><th>Hora</th>`;
+  days.forEach((d,i)=>{h+=`<th>${dn[i]}<br><small>${d.slice(5)}</small></th>`;});
+  h+=`</tr></thead><tbody>`;
+  for(let hr=START_HOUR;hr<END_HOUR;hr++){
+    h+=`<tr><td class="hour-label">${pad2(hr)}:00</td>`;
+    days.forEach(d=>{
+      const bs=bookings.filter(b=>b.date===d&&Number(b.time?.slice(0,2))===hr);
+      if(bs.length){
+        const b=bs[0], mine=normalizeName(b.advisor)===normalizeName(currentUser);
+        h+=`<td><span class="${mine?'block-mine':'block-busy'}" onclick='openBookingModal("${b.id}")'>${b.advisor.split(' ')[0]}</span></td>`;
+      } else h+=`<td></td>`;
     });
-    html += '</tr>';
+    h+=`</tr>`;
   }
-  html += '</tbody>';
-  table.innerHTML = html;
+  return h+`</tbody></table>`;
 }
 
-function calCellClick(roomId, dateStr, time){
-  document.getElementById('dateInput').value = dateStr;
-  document.getElementById('roomSelectReservar').value = roomId;
-  goReservar();
-  setTimeout(()=>{
-    const duration = parseInt(document.getElementById('durationSelect').value, 10);
-    loadSlots().then(()=> selectSlot(roomId, time, duration));
-  }, 50);
-}
-
-/* ====== MODAL DE DETALLE / EDITAR / ELIMINAR RESERVA ====== */
-function findBookingById(id){
-  return weekBookingsCache.find(b=>b.id===id) || bookingsCache.find(b=>b.id===id) || (window.__verBookingsCache||[]).find(b=>b.id===id);
-}
-
-function openBookingModal(id){
-  const b = findBookingById(id);
-  if(!b){ showToast('No se encontró la reserva.', true); return; }
-
-  const room = ROOMS.find(r=>r.id===b.room);
-  const startH = parseInt(b.time.split(':')[0],10);
-  const endLabel = hourLabel(Math.min(startH + (b.duration||1), END_HOUR));
-  const canManage = canEditBooking(b, currentUser);
-  const canDel    = canCancelBooking(b, currentUser);
-  const past      = isBookingPast(b);
-
-  let durationOptions = '';
-  for(let d=1; d<=4; d++){
-    durationOptions += `<option value="${d}" ${d===(b.duration||1)?'selected':''}>${d} hora${d>1?'s':''}</option>`;
-  }
-
-  let html = `
-    <p style="margin:0 0 6px;"><strong>${room ? room.label : b.room}</strong></p>
-    <p style="margin:0 0 6px;color:var(--muted);">${formatDate(b.date)} · ${b.time} – ${endLabel} hrs</p>
-    <p style="margin:0 0 18px;">Reservado por <strong>${b.advisor}</strong></p>
-  `;
-
-  if(past){
-    html += `<p style="font-size:12.5px;color:var(--muted);margin-top:4px;">🔒 Esta reserva ya ocurrió y no puede modificarse.</p>`;
-  } else if(canManage){
-    html += `
-      <div class="field">
-        <label>Cambiar duración</label>
-        <select id="modalDurationSelect">${durationOptions}</select>
-      </div>
-      <button class="btn-primary" style="margin-bottom:10px;" onclick="saveBookingDuration('${b.id}')">Guardar cambios</button>
-    `;
-    if(canDel){
-      html += `<button class="btn-primary" style="background:#D64545;box-shadow:none;" onclick="deleteBookingFromModal('${b.id}','${b.advisor}')">Eliminar reserva</button>`;
-    } else {
-      html += `<p style="font-size:12px;color:var(--muted);margin-top:8px;">🔒 No se puede cancelar con menos de 2 horas de anticipación.</p>`;
-    }
-  } else if(!currentUser){
-    html += `<p style="font-size:12.5px;color:var(--muted);">Inicia sesión para poder editar o eliminar esta reserva (solo si es tuya, o eres administrador).</p>`;
-  } else {
-    html += `<p style="font-size:12.5px;color:var(--muted);">Solo ${b.advisor} o un administrador pueden modificar esta reserva.</p>`;
-  }
-
-  document.getElementById('bookingModalBody').innerHTML = html;
-  document.getElementById('bookingModalOverlay').style.display = 'flex';
-}
-
-function closeBookingModal(){
-  document.getElementById('bookingModalOverlay').style.display = 'none';
-}
-
-async function saveBookingDuration(id){
-  const newDuration = parseInt(document.getElementById('modalDurationSelect').value, 10);
-  try{
-    const res = await apiPost({action:'edit', id, duration:newDuration, advisor:currentUser});
-    if(res.ok){
-      showToast('Duración actualizada ✓');
-      closeBookingModal();
-      loadCalendar();
-      loadTable();
-      loadSlots();
-    } else {
-      showToast(res.message || 'No se pudo actualizar.', true);
-    }
-  }catch(e){
-    showToast('Error de conexión al editar.', true);
-  }
-}
-
-async function deleteBookingFromModal(id, ownerName){
-  closeBookingModal();
-  await cancelBooking(id, ownerName);
-}
-
-/* ====== API ====== */
-async function apiGet(date){
-  if(LOCAL_MODE){
-    return localGetAll().filter(b=>b.date===date);
-  }
-  const res = await fetch(`${API_URL}?date=${date}`);
-  if(!res.ok) throw new Error('Error de conexión');
-  return res.json();
-}
-async function apiGetAll(){
-  if(LOCAL_MODE){
-    return localGetAll();
-  }
-  const res = await fetch(API_URL);
-  if(!res.ok) throw new Error('Error de conexión');
-  return res.json();
-}
-async function apiPost(payload){
-  if(LOCAL_MODE){
-    return localApiPost(payload);
-  }
-  const res = await fetch(API_URL, {
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(payload)
-  });
-  return res.json();
-}
-
-function localApiPost(payload){
-  const list = localGetAll();
-  if(payload.action === 'create'){
-    const newStart = parseInt(payload.time.split(':')[0],10);
-    const newDur = Math.max(1, parseInt(payload.duration||1,10));
-    const conflict = list.some(b=>{
-      if(b.room!==payload.room || b.date!==payload.date) return false;
-      const s = parseInt(b.time.split(':')[0],10);
-      const sp = Math.max(1, b.duration||1);
-      return rangesOverlap(newStart, newStart+newDur, s, s+sp);
-    });
-    if(conflict){
-      return {ok:false, message:"Ese horario se cruza con otra reserva ya existente."};
-    }
-    const id = 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
-    list.push({id, room:payload.room, date:payload.date, time:payload.time, duration:newDur, advisor:payload.advisor});
-    const saved = localSaveAll(list);
-    if(!saved){
-      return {ok:false, message:"Tu navegador bloqueó el guardado local (localStorage). Abre el sitio desde un servidor local (no con doble click al archivo) o conecta Google Sheets."};
-    }
-    return {ok:true, id};
-  }
-  if(payload.action === 'edit'){
-    const idx = list.findIndex(b=>b.id===payload.id);
-    if(idx===-1) return {ok:false, message:"No se encontró la reserva."};
-    if(list[idx].advisor !== payload.advisor && !isAdmin(payload.advisor)) return {ok:false, message:"Solo puedes editar tus propias reservas."};
-    const newDur = Math.max(1, parseInt(payload.duration||1,10));
-    const s = parseInt(list[idx].time.split(':')[0],10);
-    const conflict = list.some((b,i)=>{
-      if(i===idx || b.room!==list[idx].room || b.date!==list[idx].date) return false;
-      const bs = parseInt(b.time.split(':')[0],10);
-      const bsp = Math.max(1, b.duration||1);
-      return rangesOverlap(s, s+newDur, bs, bs+bsp);
-    });
-    if(conflict) return {ok:false, message:"La nueva duración se cruza con otra reserva."};
-    list[idx].duration = newDur;
-    const saved = localSaveAll(list);
-    if(!saved) return {ok:false, message:"Tu navegador bloqueó el guardado local (localStorage)."};
-    return {ok:true};
-  }
-  if(payload.action === 'cancel'){
-    const idx = list.findIndex(b=>b.id===payload.id);
-    if(idx===-1) return {ok:false, message:"No se encontró la reserva."};
-    const isOwner = list[idx].advisor === payload.advisor;
-    if(!isOwner && !isAdmin(payload.advisor)) return {ok:false, message:"Solo puedes cancelar tus propias reservas."};
-    list.splice(idx,1);
-    localSaveAll(list);
-    return {ok:true};
-  }
-  return {ok:false, message:"Acción no reconocida."};
-}
-
-function showToast(msg, isError){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show' + (isError? ' error':'');
-  setTimeout(()=>{ t.className=''; }, 3500);
-}
-
-/* ====== SLOTS / RESERVAR ====== */
-function hourLabel(h){
-  return `${String(h).padStart(2,'0')}:00`;
-}
-
+// Reservar sala
+let selectedSlot=null, _weekCache={};
 async function loadSlots(){
-  const date = document.getElementById('dateInput').value;
-  const roomId = document.getElementById('roomSelectReservar').value;
-  if(!date) return;
-  if(!selection.room || selection.room!==roomId) selection = {room:null, time:null, duration:null};
-  updateSummary();
+  const room=document.getElementById('roomSelectReservar').value;
+  const date=document.getElementById('dateInput').value;
+  const dur=parseInt(document.getElementById('durationSelect').value);
+  selectedSlot=null;
+  document.getElementById('confirmPanel').style.display='none';
+  const grid=document.getElementById('slotsReservar');
+  if(!date){grid.innerHTML='<p style="color:#999;font-size:.85rem">Elige una fecha</p>';return;}
+  if(!validateDateLimit(date)){document.getElementById('dateInput').value='';grid.innerHTML='';return;}
+  grid.innerHTML='<p style="color:#999;font-size:.85rem">Cargando…</p>';
   try{
-    bookingsCache = await apiGet(date);
-  }catch(e){
-    showToast('No se pudo cargar disponibilidad. Revisa la conexión con Google Sheets.', true);
-    bookingsCache = [];
-  }
-  updateWeeklyUsageBar(date);
-  renderSlots(roomId, date);
-}
-
-function renderSlots(roomId, date){
-  const container = document.getElementById('slotsReservar');
-  container.innerHTML = '';
-  const duration = parseInt(document.getElementById('durationSelect').value, 10);
-  const taken = bookingsCache.filter(b=>b.room===roomId && b.date===date);
-
-  for(let h=START_HOUR; h<END_HOUR; h++){
-    const time = hourLabel(h);
-    const occupant = taken.find(b=>{
-      const s = parseInt(b.time.split(':')[0],10);
-      const sp = Math.max(1, b.duration||1);
-      return h>=s && h<s+sp;
+    const [dayData,used]=await Promise.all([apiGet({date}),loadWeekUsage(room,date)]);
+    const busyHours=new Set();
+    (dayData.bookings||[]).filter(b=>b.room===room).forEach(b=>{
+      const s=Number(b.time?.slice(0,2));
+      for(let i=0;i<Math.max(1,Number(b.duration)||1);i++)busyHours.add(s+i);
     });
-    const div = document.createElement('div');
-    div.className = 'slot';
-
-    if(occupant){
-      div.classList.add('taken');
-      div.innerHTML = `${time}<br><span style="font-size:10px;font-weight:500;">${shortName(occupant.advisor)}</span>`;
-      div.title = `Ocupado por ${occupant.advisor}`;
-    } else {
-      const fits = (h + duration <= END_HOUR) && !taken.some(b=>{
-        const s = parseInt(b.time.split(':')[0],10);
-        const sp = Math.max(1, b.duration||1);
-        return rangesOverlap(h, h+duration, s, s+sp);
-      });
-      div.textContent = time;
-      if(fits){
-        div.onclick = ()=>selectSlot(roomId, time, duration);
-      } else {
-        div.classList.add('taken');
-        div.title = `No cabe una reserva de ${duration} hora(s) a partir de esta hora.`;
-      }
-      if(selection.room===roomId && selection.time===time && selection.duration===duration && fits){
-        div.classList.add('selected');
-      }
+    const rec=advisorsData.find(a=>normalizeName(a.nombre)===normalizeName(currentUser));
+    showWeeklyUsage('weeklyUsageBar',used,rec?.limiteHoras??999,room);
+    let html='';
+    for(let h=START_HOUR;h<=END_HOUR-dur;h++){
+      let fits=true;
+      for(let i=0;i<dur;i++)if(busyHours.has(h+i)){fits=false;break;}
+      html+=fits
+        ?`<button class="slot" onclick="selectSlot(${h},'${room}','${date}',${dur})">${pad2(h)}:00</button>`
+        :`<button class="slot unavail">${pad2(h)}:00</button>`;
     }
-    container.appendChild(div);
-  }
+    grid.innerHTML=html||'<p style="color:#999;font-size:.85rem">No hay horarios disponibles</p>';
+  }catch{grid.innerHTML='<p style="color:red;font-size:.85rem">Error al cargar</p>';}
 }
-
-function selectSlot(roomId, time, duration){
-  selection = {room: roomId, time: time, duration: duration};
-  const date = document.getElementById('dateInput').value;
-  renderSlots(roomId, date);
-  updateSummary();
+async function loadWeekUsage(room,date){
+  const d=new Date(date+'T12:00:00'), day=d.getDay();
+  const mon=new Date(d); mon.setDate(d.getDate()-(day===0?6:day-1));
+  const key=`${room}|${mon.toISOString().slice(0,10)}`;
+  if(_weekCache[key])return _weekCache[key];
+  const promises=[];
+  for(let i=0;i<7;i++){const dd=new Date(mon);dd.setDate(mon.getDate()+i);promises.push(apiGet({date:dd.toISOString().slice(0,10)}));}
+  const results=await Promise.all(promises);
+  let used=0;
+  results.forEach(r=>(r.bookings||[]).filter(b=>b.room===room&&normalizeName(b.advisor)===normalizeName(currentUser)).forEach(b=>used+=Math.max(1,Number(b.duration)||1)));
+  _weekCache[key]=used; return used;
 }
-
-function updateSummary(){
-  const summary = document.getElementById('selectionSummary');
-  const btn = document.getElementById('bookBtn');
-  if(selection.room && selection.time && selection.duration){
-    const room = ROOMS.find(r=>r.id===selection.room);
-    const date = document.getElementById('dateInput').value;
-    const startH = parseInt(selection.time.split(':')[0],10);
-    const endLabel = hourLabel(Math.min(startH+selection.duration, END_HOUR));
-    summary.textContent = `${room.label} · ${formatDate(date)} · de ${selection.time} a ${endLabel} hrs (${selection.duration}h) · Reserva a nombre de ${currentUser}.`;
-    btn.disabled = false;
-  } else {
-    summary.textContent = 'Selecciona un horario arriba.';
-    btn.disabled = true;
-  }
+function showWeeklyUsage(elId,used,limit,label){
+  const el=document.getElementById(elId); if(!el)return;
+  const pct=Math.min(100,Math.round(used/limit*100));
+  const col=pct>=100?'#c0392b':pct>=75?'#e67e22':'#27ae60';
+  el.innerHTML=`Uso semanal${label?' ('+label+')':''}: <b>${used}h</b> de ${limit}h &nbsp;<span style="background:#eee;border-radius:4px;display:inline-block;width:80px;height:8px;vertical-align:middle"><span style="display:block;width:${pct}%;height:100%;background:${col};border-radius:4px"></span></span>`;
 }
-
-function formatDate(d){
-  const [y,m,day] = d.split('-');
-  return `${day}/${m}/${y}`;
+function selectSlot(h,room,date,dur){
+  selectedSlot={h,room,date,dur};
+  document.querySelectorAll('#slotsReservar .slot').forEach(b=>b.classList.toggle('selected',b.textContent===`${pad2(h)}:00`&&!b.classList.contains('unavail')));
+  document.getElementById('selectionSummary').innerHTML=`<b>${ROOMS[room]?.label}</b> · ${fmtDate(date)} · ${pad2(h)}:00 – ${pad2(h+dur)}:00 (${dur}h)`;
+  document.getElementById('confirmPanel').style.display='';
 }
-
 async function confirmBooking(){
-  if(!selection.room || !selection.time || !selection.duration) return;
-  const date = document.getElementById('dateInput').value;
-  const btn = document.getElementById('bookBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Reservando...';
+  if(!selectedSlot)return;
+  const {h,room,date,dur}=selectedSlot;
+  document.getElementById('bookBtn').disabled=true;
   try{
-    const res = await apiPost({
-      action:'create',
-      room: selection.room,
-      date: date,
-      time: selection.time,
-      duration: selection.duration,
-      advisor: currentUser
-    });
-    if(res.ok){
-      showToast('Reserva confirmada ✓');
-      selection = {room:null, time:null, duration:null};
-      _weekUsageCache.wStart = null; // forzar recarga del contador semanal
-      await loadSlots();
-    } else {
-      showToast(res.message || 'Ese horario ya fue tomado, elige otro.', true);
-      await loadSlots();
+    const res=await apiPost({action:'create',room,date,time:`${pad2(h)}:00`,duration:dur,advisor:currentUser});
+    if(res.ok){showToast('¡Reserva confirmada!');selectedSlot=null;document.getElementById('confirmPanel').style.display='none';_weekCache={};loadSlots();}
+    else showToast(res.message||'Error',true);
+  }catch{showToast('Error de red',true);}
+  document.getElementById('bookBtn').disabled=false;
+}
+
+// Modal salas
+let allBookings=[];
+async function openBookingModal(id){
+  const b=allBookings.find(x=>x.id===id);
+  if(!b){showToast('Reserva no encontrada',true);return;}
+  const modal=document.getElementById('bookModal');
+  document.getElementById('bmTitle').textContent=ROOMS[b.room]?.label||b.room;
+  document.getElementById('bmBody').innerHTML=`
+    <div class="field"><strong>Asesor:</strong> ${b.advisor}</div>
+    <div class="field"><strong>Fecha:</strong> ${fmtDate(b.date)}</div>
+    <div class="field"><strong>Horario:</strong> ${b.time} – ${pad2(Number(b.time?.slice(0,2))+(Number(b.duration)||1))}:00 (${b.duration}h)</div>`;
+  const actions=document.getElementById('bmActions'); actions.innerHTML='';
+  const mine=normalizeName(b.advisor)===normalizeName(currentUser)||isAdmin(currentUser);
+  if(mine){
+    const dt=new Date(b.date+'T'+b.time);
+    if((dt-new Date())>=2*3600*1000){
+      const btn=document.createElement('button'); btn.className='btn btn-danger btn-sm';
+      btn.textContent='Cancelar reserva'; btn.onclick=()=>cancelBooking(b.id);
+      actions.appendChild(btn);
     }
-  }catch(e){
-    showToast('Error de conexión al reservar.', true);
-  }finally{
-    btn.innerHTML = 'Reservar';
-    updateSummary();
   }
+  modal.classList.add('open');
+}
+async function cancelBooking(id){
+  if(!confirm('¿Cancelar esta reserva?'))return;
+  try{
+    const res=await apiPost({action:'cancel',id,advisor:currentUser});
+    if(res.ok){showToast('Reserva cancelada');closeModal('bookModal');allBookings=[];loadCalendar();}
+    else showToast(res.message||'Error',true);
+  }catch{showToast('Error de red',true);}
 }
 
-/* ====== HISTÓRICO DE RESERVAS ====== */
-function clearVerFilters(){
-  document.getElementById('dateFromVer').value = '';
-  document.getElementById('dateToVer').value = '';
-  document.getElementById('roomFilterVer').value = '';
-  document.getElementById('advisorFilterVer').value = '';
-  loadTable();
-}
-
+// Lista salas
 async function loadTable(){
-  const from = document.getElementById('dateFromVer').value;
-  const to = document.getElementById('dateToVer').value;
-  const roomFilter = document.getElementById('roomFilterVer').value;
-  const tbody = document.getElementById('bookingsTableBody');
-  const empty = document.getElementById('bookingsEmpty');
-  tbody.innerHTML = '';
-
-  let list = [];
+  const from=document.getElementById('dateFromVer').value;
+  const to=document.getElementById('dateToVer').value;
+  const room=document.getElementById('roomFilterVer').value;
+  const adv=document.getElementById('advisorFilterVer').value;
+  const tbody=document.getElementById('bookingsTableBody');
+  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#999">Cargando…</td></tr>';
   try{
-    list = await apiGetAll();
-  }catch(e){
-    showToast('No se pudo cargar el histórico de reservas.', true);
-  }
-
-  const advisorFilter = document.getElementById('advisorFilterVer').value;
-  if(from) list = list.filter(b=>b.date >= from);
-  if(to) list = list.filter(b=>b.date <= to);
-  if(roomFilter) list = list.filter(b=>b.room === roomFilter);
-  if(advisorFilter) list = list.filter(b=>b.advisor === advisorFilter);
-
-  window.__verBookingsCache = list;
-
-  // más reciente primero
-  list.sort((a,b)=> b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
-
-  if(list.length===0){
-    empty.style.display='block';
-  } else {
-    empty.style.display='none';
-    list.forEach(b=>{
-      const tr = document.createElement('tr');
-      const badgeClass = b.room==='IPC' ? 'ipc' : 'nasdaq';
-      const roomLabel = ROOMS.find(r=>r.id===b.room)?.label || b.room;
-      const startH = parseInt(b.time.split(':')[0],10);
-      const endLabel = hourLabel(Math.min(startH + (b.duration||1), END_HOUR));
-      const canCancel = canCancelBooking(b, currentUser);
-      const isOwnerOrAdmin = currentUser && (b.advisor===currentUser || isAdmin(currentUser));
-      const cancelLabel = (currentUser && isAdmin(currentUser) && b.advisor!==currentUser) ? 'Eliminar (admin)' : 'Cancelar';
-      const bPast = isBookingPast(b);
-      const within2h = !bPast && isOwnerOrAdmin && !canCancel;
-      tr.innerHTML = `
-        <td>${formatDate(b.date)}</td>
-        <td><span class="badge ${badgeClass}">${roomLabel}</span></td>
-        <td>${b.time} – ${endLabel} hrs (${b.duration||1}h)</td>
+    const days=[];
+    const s=new Date((from||todayStr())+'T12:00:00'), e=new Date((to||todayStr())+'T12:00:00');
+    for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1))days.push(d.toISOString().slice(0,10));
+    const all=[];
+    await Promise.all(days.map(async d=>{const data=await apiGet({date:d});(data.bookings||[]).forEach(b=>all.push(b));}));
+    let rows=all;
+    if(room)rows=rows.filter(b=>b.room===room);
+    if(adv==='__mine__')rows=rows.filter(b=>normalizeName(b.advisor)===normalizeName(currentUser));
+    else if(adv)rows=rows.filter(b=>normalizeName(b.advisor)===normalizeName(adv));
+    rows.sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+    allBookings=all;
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#999">Sin reservas</td></tr>';return;}
+    tbody.innerHTML=rows.map(b=>{
+      const mine=normalizeName(b.advisor)===normalizeName(currentUser)||isAdmin(currentUser);
+      const dt=new Date(b.date+'T'+b.time), can=(dt-new Date())>=2*3600*1000&&mine&&dt>new Date();
+      const fin=pad2(Number(b.time?.slice(0,2))+(Number(b.duration)||1))+':00';
+      return `<tr>
+        <td><span class="badge badge-${b.room.toLowerCase()}">${b.room}</span></td>
+        <td>${fmtDate(b.date)}</td><td>${b.time}</td><td>${fin}</td>
         <td>${b.advisor}</td>
-        <td>${canCancel
-          ? `<span class="cancel-link" onclick="cancelBooking('${b.id}','${b.advisor}')">${cancelLabel}</span>`
-          : bPast && isOwnerOrAdmin
-            ? `<span style="font-size:12px;color:var(--muted);" title="La reserva ya ocurrió">✓ Concluida</span>`
-            : within2h
-              ? `<span style="font-size:12px;color:var(--muted);" title="No puedes cancelar con menos de 2h de anticipación">🔒 &lt;2h</span>`
-              : ''}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
+        <td>${can?`<button class="btn btn-danger btn-sm" onclick="cancelBookingTable('${b.id}')">Cancelar</button>`:'—'}</td>
+      </tr>`;
+    }).join('');
+  }catch{tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:red">Error</td></tr>';}
+}
+async function cancelBookingTable(id){
+  if(!confirm('¿Cancelar esta reserva?'))return;
+  try{
+    const res=await apiPost({action:'cancel',id,advisor:currentUser});
+    if(res.ok){showToast('Cancelada');allBookings=[];loadTable();}
+    else showToast(res.message||'Error',true);
+  }catch{showToast('Error de red',true);}
+}
+function populateAdvisorFilter(){
+  const sel=document.getElementById('advisorFilterVer'), cur=sel.value;
+  while(sel.options.length>2)sel.remove(2);
+  advisorsData.filter(a=>a.activo).sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(a=>{
+    const o=document.createElement('option');o.value=a.nombre;o.textContent=a.nombre;sel.appendChild(o);
+  });
+  sel.value=cur;
 }
 
-async function cancelBooking(id, ownerName){
-  if(!currentUser){
-    pendingTabAfterLogin = 'ver';
-    openLoginModal();
-    return;
+// ══════════════════════ PUESTOS ══════════════════════════════════════════════
+
+let puestosInitialized=false;
+async function initPuestosModule(){
+  if(!puestosInitialized){
+    puestosInitialized=true;
+    try{const data=await apiGet({action:'puestos'});puestosConfig=data.puestos||[];}catch{}
+    buildPuestoSelect(); buildPFilterPuesto();
   }
-  const msg = (ownerName && ownerName!==currentUser)
-    ? `Vas a eliminar la reserva de ${ownerName} como administrador (${currentUser}). ¿Confirmas?`
-    : '¿Cancelar esta reserva?';
-  if(!confirm(msg)) return;
-  try{
-    const res = await apiPost({action:'cancel', id: id, advisor: currentUser});
-    if(res.ok){
-      showToast('Reserva cancelada.');
-      _weekUsageCache.wStart = null; // forzar recarga del contador semanal
-      loadTable();
-      loadSlots();
-      loadCalendar();
+  const d=document.getElementById('mapDateP');
+  if(!d.value)d.value=todayStr();
+  refreshMap();
+}
+function buildPuestoSelect(){
+  const sel=document.getElementById('puestoSelect');
+  puestosConfig.filter(p=>p.disponible).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})).forEach(p=>{
+    const o=document.createElement('option');o.value=p.id;o.textContent=p.nombre;sel.appendChild(o);
+  });
+}
+function buildPFilterPuesto(){
+  const sel=document.getElementById('pPuestoFilter');
+  puestosConfig.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})).forEach(p=>{
+    const o=document.createElement('option');o.value=p.id;o.textContent=p.nombre;sel.appendChild(o);
+  });
+}
+
+// Tabs puestos
+let puestosCurrentTab='mapa';
+function switchPuestosTab(tab){
+  puestosCurrentTab=tab;
+  document.querySelectorAll('#puestosTabs .tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('#modPuestos .tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('p-tab-'+tab).classList.add('active');
+  if(tab==='mapa')refreshMap();
+  if(tab==='lista')loadTableP();
+}
+
+// Mapa
+async function refreshMap(){
+  const date=document.getElementById('mapDateP').value||todayStr();
+  let bookings=[];
+  try{const d=await apiGet({action:'reservasPuestos',date});bookings=d.bookings||[];}catch{}
+  renderMap(date,bookings,new Date());
+}
+function renderMap(date,bookings,now){
+  const nowH=now.getHours()+now.getMinutes()/60, isToday=date===todayStr();
+  let svg=`<svg viewBox="0 0 700 560" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gN" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3F4FA3"/><stop offset="100%" stop-color="#2B3673"/></linearGradient>
+    <linearGradient id="gG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#27ae60"/><stop offset="100%" stop-color="#1a7a3c"/></linearGradient>
+  </defs>
+  <rect x="50" y="60" width="600" height="470" rx="16" fill="#e8ecf5" stroke="#cdd5f0" stroke-width="2"/>
+  <rect x="318" y="100" width="64" height="410" fill="#f5f7ff" stroke="#d0d5e8" stroke-width="1"/>
+  <text x="350" y="310" text-anchor="middle" fill="#aab" font-size="11" transform="rotate(-90,350,310)">PASILLO</text>
+  <text x="195" y="80" text-anchor="middle" fill="#3F4FA3" font-weight="700" font-size="13">BLOQUE A</text>
+  <text x="500" y="80" text-anchor="middle" fill="#3F4FA3" font-weight="700" font-size="13">BLOQUE B</text>`;
+
+  Object.entries(DESK_POS).forEach(([pid,pos])=>{
+    const cfg=puestosConfig.find(p=>p.id===pid);
+    const active=cfg?.disponible!==false;
+    const bs=bookings.filter(b=>b.puesto===pid);
+    const curB=isToday?bs.find(b=>{const s=Number(b.time?.slice(0,2)),d=Math.max(1,Number(b.duration)||1);return s<=nowH&&nowH<s+d;}):null;
+    const mine=curB&&normalizeName(curB.advisor)===normalizeName(currentUser);
+    const nextB=!curB?bs.filter(b=>{const s=Number(b.time?.slice(0,2));return isToday?s>nowH:true;}).sort((a,b2)=>a.time.localeCompare(b2.time))[0]:null;
+    let fill='white',tc='#3F4FA3',sk='#8B98D9';
+    if(!active){fill='#ccc';tc='#888';sk='#bbb';}
+    else if(mine){fill='url(#gG)';tc='#fff';sk='#1a7a3c';}
+    else if(curB){fill='url(#gN)';tc='#fff';sk='#2B3673';}
+    const cx=pos.x+DESK_W/2, cy=pos.y+DESK_H/2;
+    svg+=`<g ${active&&!curB?`onclick="openDeskBookingP('${pid}')" style="cursor:pointer"`:''}>
+      <rect x="${pos.x}" y="${pos.y}" width="${DESK_W}" height="${DESK_H}" rx="10" fill="${fill}" stroke="${sk}" stroke-width="1.5"/>
+      <text x="${cx}" y="${cy-10}" text-anchor="middle" fill="${tc}" font-weight="700" font-size="12">${pid}</text>`;
+    if(!active){
+      svg+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" fill="${tc}" font-size="10">No disp.</text>`;
+    } else if(mine){
+      const s=Number(curB.time?.slice(0,2));
+      svg+=`<text x="${cx}" y="${cy+4}" text-anchor="middle" fill="#fff" font-size="9">Tu reserva</text>
+        <text x="${cx}" y="${cy+16}" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="9">${pad2(s)}–${pad2(s+(Number(curB.duration)||1))}</text>`;
+    } else if(curB){
+      const s=Number(curB.time?.slice(0,2));
+      svg+=`<text x="${cx}" y="${cy+4}" text-anchor="middle" fill="#fff" font-size="9">${curB.advisor.split(' ')[0]}</text>
+        <text x="${cx}" y="${cy+16}" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="9">${pad2(s)}–${pad2(s+(Number(curB.duration)||1))}</text>`;
     } else {
-      showToast(res.message || 'No se pudo cancelar.', true);
+      svg+=`<text x="${cx}" y="${cy+4}" text-anchor="middle" fill="#27ae60" font-size="9" font-weight="600">Disponible</text>`;
+      if(nextB){const s=Number(nextB.time?.slice(0,2));svg+=`<text x="${cx}" y="${cy+16}" text-anchor="middle" fill="#888" font-size="8">Próx: ${pad2(s)}:00</text>`;}
     }
-  }catch(e){
-    showToast('Error de conexión al cancelar.', true);
+    svg+=`</g>`;
+  });
+  svg+=`</svg>`;
+  document.getElementById('mapWrap').innerHTML=svg;
+}
+function openDeskBookingP(pid){
+  switchPuestosTab('reservar');
+  document.getElementById('puestoSelect').value=pid;
+  if(!document.getElementById('rDate').value)document.getElementById('rDate').value=todayStr();
+  onPuestoOrDateChange();
+}
+
+// Reservar puesto
+let selectedStartP=null, selectedFinP=null, editingBookingP=null;
+async function onPuestoOrDateChange(){
+  selectedStartP=null; selectedFinP=null;
+  document.getElementById('horaInicio').innerHTML='<option value="">— Cargando… —</option>';
+  document.getElementById('horaFin').innerHTML='<option value="">— Elige fin —</option>';
+  document.getElementById('pFinPanel').style.display='none';
+  document.getElementById('pConfirmPanel').classList.remove('visible');
+  document.getElementById('pEditPanel').classList.remove('visible');
+  const pid=document.getElementById('puestoSelect').value;
+  const date=document.getElementById('rDate').value;
+  if(!pid||!date)return;
+  if(!validateDateLimit(date)){document.getElementById('rDate').value='';return;}
+  let bookings=[];
+  try{const d=await apiGet({action:'reservasPuestos',date});bookings=d.bookings||[];}catch{}
+  const taken=new Set();
+  bookings.filter(b=>b.puesto===pid).forEach(b=>{
+    const s=Number(b.time?.slice(0,2)),dur=Math.max(1,Number(b.duration)||1);
+    for(let i=0;i<dur;i++)taken.add(s+i);
+  });
+  try{
+    const used=await loadWeekUsagePuesto(date);
+    const rec=advisorsData.find(a=>normalizeName(a.nombre)===normalizeName(currentUser));
+    showWeeklyUsage('weeklyUsageBarP',used,rec?.limiteHorasPuesto??999,'puesto');
+  }catch{}
+  const ini=document.getElementById('horaInicio');
+  ini.innerHTML='<option value="">— Elige inicio —</option>';
+  for(let h=7;h<22;h++){
+    const o=document.createElement('option');
+    o.value=h; o.textContent=`${pad2(h)}:00`;
+    if(taken.has(h)){o.disabled=true;o.textContent+=' (ocupado)';}
+    ini.appendChild(o);
   }
 }
+async function loadWeekUsagePuesto(date){
+  const d=new Date(date+'T12:00:00'), day=d.getDay();
+  const mon=new Date(d); mon.setDate(d.getDate()-(day===0?6:day-1));
+  let used=0;
+  const promises=[];
+  for(let i=0;i<7;i++){const dd=new Date(mon);dd.setDate(mon.getDate()+i);promises.push(apiGet({action:'reservasPuestos',date:dd.toISOString().slice(0,10)}));}
+  const results=await Promise.all(promises);
+  results.forEach(r=>(r.bookings||[]).filter(b=>normalizeName(b.advisor)===normalizeName(currentUser)).forEach(b=>used+=Math.max(1,Number(b.duration)||1)));
+  return used;
+}
+function onHoraInicioChange(){
+  selectedStartP=parseInt(document.getElementById('horaInicio').value);
+  selectedFinP=null;
+  document.getElementById('pConfirmPanel').classList.remove('visible');
+  document.getElementById('pEditPanel').classList.remove('visible');
+  const pid=document.getElementById('puestoSelect').value;
+  const date=document.getElementById('rDate').value;
+  if(isNaN(selectedStartP)||!pid||!date){document.getElementById('pFinPanel').style.display='none';return;}
+  apiGet({action:'reservasPuestos',date}).then(d=>{
+    const taken=new Set();
+    (d.bookings||[]).filter(b=>b.puesto===pid).forEach(b=>{
+      const s=Number(b.time?.slice(0,2)),dur=Math.max(1,Number(b.duration)||1);
+      for(let i=0;i<dur;i++)taken.add(s+i);
+    });
+    const fin=document.getElementById('horaFin');
+    fin.innerHTML='<option value="">— Elige fin —</option>';
+    for(let h=selectedStartP+1;h<=22;h++){
+      let blocked=false;
+      for(let i=selectedStartP;i<h;i++)if(taken.has(i)){blocked=true;break;}
+      if(blocked)break;
+      const o=document.createElement('option');o.value=h;o.textContent=`${pad2(h)}:00`;fin.appendChild(o);
+    }
+    document.getElementById('pFinPanel').style.display='';
+  }).catch(()=>{document.getElementById('pFinPanel').style.display='';});
+}
+function onHoraFinChange(){
+  selectedFinP=parseInt(document.getElementById('horaFin').value);
+  if(isNaN(selectedFinP)||selectedFinP<=selectedStartP){document.getElementById('pConfirmPanel').classList.remove('visible');return;}
+  const pid=document.getElementById('puestoSelect').value;
+  const date=document.getElementById('rDate').value;
+  const cfg=puestosConfig.find(p=>p.id===pid);
+  document.getElementById('pSummary').textContent=`${cfg?.nombre||pid} · ${fmtDate(date)} · ${pad2(selectedStartP)}:00 – ${pad2(selectedFinP)}:00 (${selectedFinP-selectedStartP}h)`;
+  if(editingBookingP){
+    document.getElementById('pEditInfo').textContent=`Nueva hora: ${pad2(selectedStartP)}:00 – ${pad2(selectedFinP)}:00`;
+    document.getElementById('pEditPanel').classList.add('visible');
+    document.getElementById('pConfirmPanel').classList.remove('visible');
+  } else {
+    document.getElementById('pConfirmPanel').classList.add('visible');
+    document.getElementById('pEditPanel').classList.remove('visible');
+  }
+}
+async function confirmBookingP(){
+  if(selectedStartP===null||selectedFinP===null||selectedFinP<=selectedStartP){showToast('Selecciona horario completo',true);return;}
+  const pid=document.getElementById('puestoSelect').value;
+  const date=document.getElementById('rDate').value;
+  try{
+    const res=await apiPost({action:'createPuesto',puesto:pid,date,time:`${pad2(selectedStartP)}:00`,duration:selectedFinP-selectedStartP,advisor:currentUser});
+    if(res.ok){showToast('¡Puesto reservado!');resetPFormP();switchPuestosTab('mapa');}
+    else showToast(res.message||'Error',true);
+  }catch{showToast('Error de red',true);}
+}
+function resetPFormP(){
+  selectedStartP=null;selectedFinP=null;editingBookingP=null;
+  document.getElementById('puestoSelect').value='';
+  document.getElementById('rDate').value='';
+  document.getElementById('horaInicio').innerHTML='<option value="">— Elige inicio —</option>';
+  document.getElementById('horaFin').innerHTML='<option value="">— Elige fin —</option>';
+  document.getElementById('pFinPanel').style.display='none';
+  document.getElementById('pConfirmPanel').classList.remove('visible');
+  document.getElementById('pEditPanel').classList.remove('visible');
+}
+
+// Editar puesto
+function openEditP(b){
+  editingBookingP=b;
+  switchPuestosTab('reservar');
+  document.getElementById('puestoSelect').value=b.puesto;
+  document.getElementById('rDate').value=b.date;
+  document.getElementById('pConfirmPanel').classList.remove('visible');
+  onPuestoOrDateChange().then(()=>{
+    document.getElementById('horaInicio').value=Number(b.time?.slice(0,2));
+    onHoraInicioChange();
+  });
+}
+function cancelEditP(){editingBookingP=null;resetPFormP();}
+async function submitEditP(){
+  if(!editingBookingP||selectedStartP===null||selectedFinP===null){showToast('Elige horario',true);return;}
+  try{
+    const res=await apiPost({action:'editPuesto',id:editingBookingP.id,advisor:currentUser,time:`${pad2(selectedStartP)}:00`,duration:selectedFinP-selectedStartP});
+    if(res.ok){showToast('Reserva actualizada');editingBookingP=null;resetPFormP();switchPuestosTab('lista');}
+    else showToast(res.message||'Error',true);
+  }catch{showToast('Error de red',true);}
+}
+
+// Lista puestos
+async function loadTableP(){
+  const from=document.getElementById('pDateFrom').value;
+  const to=document.getElementById('pDateTo').value;
+  const pid=document.getElementById('pPuestoFilter').value;
+  const adv=document.getElementById('pAdvisorFilter').value;
+  const tbody=document.getElementById('pTableBody');
+  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#999">Cargando…</td></tr>';
+  try{
+    const days=[];
+    const s=new Date((from||todayStr())+'T12:00:00'), e=new Date((to||todayStr())+'T12:00:00');
+    for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1))days.push(d.toISOString().slice(0,10));
+    const all=[];
+    await Promise.all(days.map(async d=>{const data=await apiGet({action:'reservasPuestos',date:d});(data.bookings||[]).forEach(b=>all.push(b));}));
+    let rows=all;
+    if(pid)rows=rows.filter(b=>b.puesto===pid);
+    if(adv==='__mine__')rows=rows.filter(b=>normalizeName(b.advisor)===normalizeName(currentUser));
+    else if(adv)rows=rows.filter(b=>normalizeName(b.advisor)===normalizeName(adv));
+    rows.sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#999">Sin reservas</td></tr>';return;}
+    const now=new Date();
+    tbody.innerHTML=rows.map(b=>{
+      const mine=normalizeName(b.advisor)===normalizeName(currentUser)||isAdmin(currentUser);
+      const dt=new Date(b.date+'T'+b.time);
+      const canAct=(dt-now)>=12*3600*1000&&mine&&dt>now;
+      const s=Number(b.time?.slice(0,2)),dur=Math.max(1,Number(b.duration)||1);
+      const fin=pad2(s+dur)+':00';
+      const cfg=puestosConfig.find(p=>p.id===b.puesto);
+      const bJson=JSON.stringify(b).replace(/"/g,'&quot;');
+      return `<tr>
+        <td><span class="badge badge-puesto">${cfg?.nombre||b.puesto}</span></td>
+        <td>${fmtDate(b.date)}</td><td>${b.time}</td><td>${fin}</td>
+        <td>${b.advisor}</td>
+        <td style="display:flex;gap:.4rem;flex-wrap:wrap">${canAct?
+          `<button class="btn btn-secondary btn-sm" onclick='openEditP(JSON.parse(this.dataset.b))' data-b="${bJson}">Editar</button>
+           <button class="btn btn-danger btn-sm" onclick="cancelBookingP('${b.id}')">Cancelar</button>`:'—'
+        }</td>
+      </tr>`;
+    }).join('');
+  }catch{tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:red">Error</td></tr>';}
+}
+async function cancelBookingP(id){
+  if(!confirm('¿Cancelar esta reserva de puesto?'))return;
+  try{
+    const res=await apiPost({action:'cancelPuesto',id,advisor:currentUser});
+    if(res.ok){showToast('Cancelada');loadTableP();}
+    else showToast(res.message||'Error',true);
+  }catch{showToast('Error de red',true);}
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',async()=>{
+  const today=todayStr();
+  ['dateInput','rDate','mapDateP','dateFromVer','dateToVer','pDateFrom','pDateTo'].forEach(id=>{
+    const el=document.getElementById(id); if(el)el.value=today;
+  });
+  await initAdvisors();
+  const saved=safeGet('face_advisor');
+  if(saved){
+    currentUser=saved;
+    document.getElementById('userPill').textContent=saved;
+    document.getElementById('loginOverlay').style.display='none';
+    setDateInputLimits(); onAfterLogin();
+  }
+  setTimeout(()=>document.getElementById('loading').classList.add('hide'),400);
+});
 </script>
 </body>
 </html>
