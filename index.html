@@ -325,6 +325,8 @@
           </div>
         </div>
 
+        <div id="weeklyUsageBar" style="display:none;margin-bottom:14px;padding:12px 16px;border-radius:10px;background:#F5F6FA;border:1px solid var(--border);font-size:13px;"></div>
+
         <label>Horario disponible</label>
         <div class="slot-grid" id="slotsReservar"></div>
 
@@ -363,6 +365,12 @@
               <option value="NASDAQ">Sala NASDAQ</option>
             </select>
           </div>
+        </div>
+        <div class="field">
+          <label>Asesor</label>
+          <select id="advisorFilterVer">
+            <option value="">Todos los asesores</option>
+          </select>
         </div>
         <button class="week-today-btn" style="margin-bottom:14px;" onclick="clearVerFilters()">Limpiar filtros</button>
         <table>
@@ -444,6 +452,69 @@ function isAdmin(name){
   return rec ? rec.esAdmin : false;
 }
 
+function getAdvisorLimit(name){
+  const rec = advisorsData.find(a=>a.nombre===name);
+  return rec ? (rec.limiteHoras || 999) : 999;
+}
+
+/** Horas reservadas por el asesor en la semana que contiene `dateStr` (YYYY-MM-DD),
+ *  usando todas las fuentes de caché disponibles. */
+function getWeeklyUsed(advisor, dateStr){
+  const d = new Date((dateStr||todayStr()) + 'T12:00:00');
+  const day = d.getDay();
+  const diff = day===0 ? -6 : 1-day;
+  const monday = new Date(d); monday.setDate(d.getDate()+diff);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  const wStart = toDateStr(monday);
+  const wEnd   = toDateStr(sunday);
+
+  const all = [...(weekBookingsCache||[]), ...(bookingsCache||[]), ...(window.__verBookingsCache||[])];
+  const seen = new Set();
+  return all.reduce((sum, b)=>{
+    if(seen.has(b.id)) return sum;
+    if(b.advisor!==advisor || b.date<wStart || b.date>wEnd) return sum;
+    seen.add(b.id);
+    return sum + Math.max(1, b.duration||1);
+  }, 0);
+}
+
+/** Devuelve true si el asesor (no admin) puede cancelar esta reserva
+ *  (es suya Y faltan más de 2h para que comience). */
+function canCancelBooking(booking, user){
+  if(!user) return false;
+  const admin = isAdmin(user);
+  const owner = booking.advisor===user;
+  if(!owner && !admin) return false;
+  if(admin) return true;
+  // Ventana de 2 horas
+  const [y,m,day] = booking.date.split('-').map(Number);
+  const h = parseInt(booking.time.split(':')[0], 10);
+  const bookingTime = new Date(y, m-1, day, h, 0, 0);
+  const diffMs = bookingTime - new Date();
+  return diffMs >= 2*60*60*1000;
+}
+
+function updateWeeklyUsageBar(date){
+  const bar = document.getElementById('weeklyUsageBar');
+  if(!currentUser){ bar.style.display='none'; return; }
+  const limit = getAdvisorLimit(currentUser);
+  const used  = getWeeklyUsed(currentUser, date||todayStr());
+  const pct   = Math.min(100, Math.round(used/limit*100));
+  const over  = used>=limit;
+  const color = over ? 'var(--red)' : used/limit>=0.8 ? '#D97706' : 'var(--green)';
+  bar.style.display = 'block';
+  bar.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-weight:700;color:${color};">${over ? '⚠️ Límite semanal alcanzado' : `Horas esta semana: ${used} / ${limit}`}</span>
+      <span style="font-size:12px;color:var(--muted);">${pct}% usado</span>
+    </div>
+    <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
+      <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:.3s;"></div>
+    </div>
+    ${over ? '<p style="margin:8px 0 0;font-size:12px;color:var(--red);">Contacta al área directiva para que te asignen más horas esta semana.</p>' : ''}
+  `;
+}
+
 /** Obtiene la lista de asesores del backend y puebla el dropdown de login. */
 async function initAdvisors(){
   let list = [];
@@ -463,14 +534,22 @@ async function initAdvisors(){
   // Limpiar opciones anteriores excepto el placeholder
   while(sel.options.length > 1) sel.remove(1);
 
-  list
-    .filter(a=>a.activo)
-    .sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'))
-    .forEach(a=>{
-      const opt = document.createElement('option');
-      opt.value = a.nombre; opt.textContent = a.nombre;
-      sel.appendChild(opt);
-    });
+  const active = list.filter(a=>a.activo).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+
+  active.forEach(a=>{
+    const opt = document.createElement('option');
+    opt.value = a.nombre; opt.textContent = a.nombre;
+    sel.appendChild(opt);
+  });
+
+  // Poblar filtro de asesor en Lista de Reservas
+  const advisorFilter = document.getElementById('advisorFilterVer');
+  while(advisorFilter.options.length > 1) advisorFilter.remove(1);
+  active.forEach(a=>{
+    const opt = document.createElement('option');
+    opt.value = a.nombre; opt.textContent = a.nombre;
+    advisorFilter.appendChild(opt);
+  });
 }
 
 // Horario de operación: las 24 horas del día, slots de 1 hora (00:00 a 23:00).
@@ -529,6 +608,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('dateFromVer').addEventListener('change', loadTable);
   document.getElementById('dateToVer').addEventListener('change', loadTable);
   document.getElementById('roomFilterVer').addEventListener('change', loadTable);
+  document.getElementById('advisorFilterVer').addEventListener('change', loadTable);
 
   loadCalendar();
 });
@@ -728,6 +808,7 @@ function openBookingModal(id){
   const startH = parseInt(b.time.split(':')[0],10);
   const endLabel = hourLabel(Math.min(startH + (b.duration||1), END_HOUR));
   const canManage = currentUser && (currentUser===b.advisor || isAdmin(currentUser));
+  const canDel = canCancelBooking(b, currentUser);
 
   let durationOptions = '';
   for(let d=1; d<=4; d++){
@@ -747,8 +828,12 @@ function openBookingModal(id){
         <select id="modalDurationSelect">${durationOptions}</select>
       </div>
       <button class="btn-primary" style="margin-bottom:10px;" onclick="saveBookingDuration('${b.id}')">Guardar cambios</button>
-      <button class="btn-primary" style="background:#D64545;box-shadow:none;" onclick="deleteBookingFromModal('${b.id}','${b.advisor}')">Eliminar reserva</button>
     `;
+    if(canDel){
+      html += `<button class="btn-primary" style="background:#D64545;box-shadow:none;" onclick="deleteBookingFromModal('${b.id}','${b.advisor}')">Eliminar reserva</button>`;
+    } else {
+      html += `<p style="font-size:12px;color:var(--muted);margin-top:8px;">🔒 No se puede cancelar con menos de 2 horas de anticipación.</p>`;
+    }
   } else if(!currentUser){
     html += `<p style="font-size:12.5px;color:var(--muted);">Inicia sesión identificándote para poder editar o eliminar esta reserva (solo si es tuya, o eres administrador).</p>`;
   } else {
@@ -891,6 +976,7 @@ async function loadSlots(){
     showToast('No se pudo cargar disponibilidad. Revisa la conexión con Google Sheets.', true);
     bookingsCache = [];
   }
+  updateWeeklyUsageBar(date);
   renderSlots(roomId, date);
 }
 
@@ -999,6 +1085,7 @@ function clearVerFilters(){
   document.getElementById('dateFromVer').value = '';
   document.getElementById('dateToVer').value = '';
   document.getElementById('roomFilterVer').value = '';
+  document.getElementById('advisorFilterVer').value = '';
   loadTable();
 }
 
@@ -1017,9 +1104,11 @@ async function loadTable(){
     showToast('No se pudo cargar el histórico de reservas.', true);
   }
 
+  const advisorFilter = document.getElementById('advisorFilterVer').value;
   if(from) list = list.filter(b=>b.date >= from);
   if(to) list = list.filter(b=>b.date <= to);
   if(roomFilter) list = list.filter(b=>b.room === roomFilter);
+  if(advisorFilter) list = list.filter(b=>b.advisor === advisorFilter);
 
   window.__verBookingsCache = list;
 
@@ -1036,14 +1125,21 @@ async function loadTable(){
       const roomLabel = ROOMS.find(r=>r.id===b.room)?.label || b.room;
       const startH = parseInt(b.time.split(':')[0],10);
       const endLabel = hourLabel(Math.min(startH + (b.duration||1), END_HOUR));
-      const canCancel = currentUser && (b.advisor===currentUser || isAdmin(currentUser));
+      const canCancel = canCancelBooking(b, currentUser);
+      const isOwnerOrAdmin = currentUser && (b.advisor===currentUser || isAdmin(currentUser));
       const cancelLabel = (currentUser && isAdmin(currentUser) && b.advisor!==currentUser) ? 'Eliminar (admin)' : 'Cancelar';
+      // Mostrar "bloqueado" si es suya pero ya no puede cancelar por ventana de 2h
+      const within2h = isOwnerOrAdmin && !canCancel;
       tr.innerHTML = `
         <td>${formatDate(b.date)}</td>
         <td><span class="badge ${badgeClass}">${roomLabel}</span></td>
         <td>${b.time} – ${endLabel} hrs (${b.duration||1}h)</td>
         <td>${b.advisor}</td>
-        <td>${canCancel ? `<span class="cancel-link" onclick="cancelBooking('${b.id}','${b.advisor}')">${cancelLabel}</span>` : ''}</td>
+        <td>${canCancel
+          ? `<span class="cancel-link" onclick="cancelBooking('${b.id}','${b.advisor}')">${cancelLabel}</span>`
+          : within2h
+            ? `<span style="font-size:12px;color:var(--muted);" title="No puedes cancelar con menos de 2h de anticipación">🔒 &lt;2h</span>`
+            : ''}</td>
       `;
       tbody.appendChild(tr);
     });
