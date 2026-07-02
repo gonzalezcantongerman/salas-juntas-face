@@ -144,8 +144,8 @@ function getReservasPuestosSheet() {
   let s = ss.getSheetByName(RESERVAS_PUESTOS_SHEET);
   if (!s) {
     s = ss.insertSheet(RESERVAS_PUESTOS_SHEET);
-    s.appendRow(["id","puesto","date","time","duration","advisor","createdAt"]);
-    s.getRange(1,1,1,7).setFontWeight("bold");
+    s.appendRow(["id","puesto","date","time","duration","advisor","createdAt","evento"]);
+    s.getRange(1,1,1,8).setFontWeight("bold");
     s.setFrozenRows(1);
   }
   return s;
@@ -228,7 +228,7 @@ function doGet(e) {
     const s = getReservasPuestosSheet();
     const data = s.getDataRange().getValues();
     const headers = data.shift();
-    const idx = buildIdx(headers, ["id","puesto","date","time","duration","advisor"]);
+    const idx = buildIdx(headers, ["id","puesto","date","time","duration","advisor","evento"]);
     const rows = data
       .filter(r => r[idx.id] !== "" && (!date || normalizeDate(r[idx.date])===date))
       .map(r => ({
@@ -237,7 +237,8 @@ function doGet(e) {
         date:     normalizeDate(r[idx.date]),
         time:     normalizeTime(r[idx.time]),
         duration: Number(r[idx.duration])||1,
-        advisor:  r[idx.advisor]
+        advisor:  r[idx.advisor],
+        evento:   idx.evento >= 0 ? (String(r[idx.evento]||'').trim()||undefined) : undefined
       }));
 
     // Inyectar reservas virtuales de puestos fijos (solo cuando hay filtro de fecha)
@@ -451,7 +452,9 @@ function handleCancel(sheet, body) {
 function handleCreatePuesto(sheet, body) {
   const {puesto, date, time, advisor} = body;
   const duration = Math.max(1,parseInt(body.duration||1,10));
+  const evento   = String(body.evento||'').trim();
   if (!puesto||!date||!time||!advisor) return jsonResponse({ok:false,message:"Faltan datos."});
+  if (puesto === "ESCENARIO" && !evento) return jsonResponse({ok:false,message:"El campo Evento es obligatorio para el Escenario."});
 
   // Verificar que el puesto esté disponible en la config
   const pConfig = readPuestosConfig();
@@ -516,7 +519,7 @@ function handleCreatePuesto(sheet, body) {
 
     const id=Utilities.getUuid(), newRow=sheet.getLastRow()+1;
     sheet.getRange(newRow,idx.time+1).setNumberFormat("@");
-    sheet.getRange(newRow,1,1,7).setValues([[id,puesto,date,time,duration,advisor,new Date()]]);
+    sheet.getRange(newRow,1,1,8).setValues([[id,puesto,date,time,duration,advisor,new Date(),evento]]);
     return jsonResponse({ok:true,id});
   } finally { lock.releaseLock(); }
 }
@@ -617,4 +620,17 @@ function normalizeDate(v){
 }
 function jsonResponse(obj){
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ─── Migración: agregar columna "evento" a ReservasPuestos ─────────────────
+function migrateEventoColumn() {
+  const s = getReservasPuestosSheet();
+  const headers = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0];
+  if (headers.includes("evento")) {
+    Logger.log("Columna 'evento' ya existe — nada que migrar.");
+    return;
+  }
+  const col = s.getLastColumn() + 1;
+  s.getRange(1, col).setValue("evento").setFontWeight("bold");
+  Logger.log("Columna 'evento' agregada en columna " + col);
 }

@@ -51,11 +51,18 @@ header{
 .mod-sw-menu button:hover{background:var(--bg);}
 .mod-sw-menu button.cur{background:#EEF1FB;color:var(--dark);font-weight:700;}
 .mod-sw-menu button .bdg{font-size:10px;background:var(--navy);color:#fff;padding:2px 7px;border-radius:20px;margin-left:auto;}
-#userBox{display:flex;align-items:center;gap:10px;}
+#userBox{display:flex;align-items:center;gap:10px;position:relative;}
 .avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);
   border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;
   justify-content:center;font-size:14px;font-weight:700;color:#fff;}
 #userName{font-size:13px;font-weight:600;color:#fff;}
+#userDropdownTrigger{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:background .15s;}
+#userDropdownTrigger:hover{background:rgba(255,255,255,.12);}
+#userDropdownPanel{
+  display:none;position:absolute;right:0;top:calc(100% + 10px);min-width:280px;
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 8px 32px rgba(43,54,115,.18);padding:18px;z-index:300;
+}
 .btn-logout{
   background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);
   color:#fff;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;
@@ -365,10 +372,14 @@ footer a:hover{text-decoration:underline;}
     </div>
   </div>
   <div id="userBox" style="display:none;align-items:center;gap:10px;">
-    <div style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
-      <span style="font-size:11px;color:rgba(255,255,255,.6);font-weight:400;">Bienvenido,</span>
-      <span id="userName" style="font-size:14px;font-weight:700;color:#fff;">—</span>
+    <div id="userDropdownTrigger" onclick="toggleUserDropdown()">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
+        <span style="font-size:11px;color:rgba(255,255,255,.6);font-weight:400;">Bienvenido,</span>
+        <span id="userName" style="font-size:14px;font-weight:700;color:#fff;">—</span>
+      </div>
+      <span style="font-size:9px;color:rgba(255,255,255,.5);margin-left:2px;">▼</span>
     </div>
+    <div id="userDropdownPanel"></div>
     <button class="btn-logout" onclick="doLogout()">Salir</button>
   </div>
 </header>
@@ -525,11 +536,12 @@ footer a:hover{text-decoration:underline;}
 
           <!-- Escenario (reservable) -->
           <g id="escenarioGroup" style="cursor:pointer">
-            <rect id="escenarioRect" x="668" y="185" width="140" height="330" fill="#F0F0F0" stroke="#C0C0C0" stroke-width="1.5" rx="6"/>
-            <text id="escenarioLbl" x="738" y="400" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#999" transform="rotate(-90 738 400)">Escenario</text>
-            <text id="escenarioAdv" x="738" y="325" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0)" transform="rotate(-90 738 325)"></text>
-            <text id="escenarioTime" x="738" y="270" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0)" transform="rotate(-90 738 270)"></text>
-            <text x="738" y="215" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#C0C0C0" transform="rotate(-90 738 215)">click · reservar</text>
+            <rect id="escenarioRect" x="668" y="185" width="140" height="330" fill="#EEF1FB" stroke="#8B98D9" stroke-width="2" rx="6"/>
+            <text id="escenarioLbl" x="738" y="218" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="700" fill="#3F4FA3">🎭 Escenario</text>
+            <text id="escenarioStatus" x="738" y="242" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="600" fill="#1A9E55">Disponible</text>
+            <text id="escenarioAdv" x="738" y="266" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="rgba(255,255,255,0)"></text>
+            <text id="escenarioTime" x="738" y="286" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(255,255,255,0)"></text>
+            <text id="escenarioHint" x="738" y="500" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#8B98D9">click · reservar</text>
           </g>
 
           <!-- Labels -->
@@ -555,7 +567,7 @@ footer a:hover{text-decoration:underline;}
         <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#3F4FA3,#2B3673);"></div>Ocupado</div>
         <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#1A9E55,#158C49);"></div>Mi reserva</div>
         <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,#8B98D9,#6B79C4);"></div>Sala (click para reservar)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#F0F0F0;border:1px solid #C0C0C0;"></div>Escenario (click para reservar)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#EEF1FB;border:2px solid #8B98D9;"></div>Escenario (click para reservar)</div>
       </div>
     </div>
   </div>
@@ -574,6 +586,10 @@ footer a:hover{text-decoration:underline;}
         <div class="field">
           <label>Fecha</label>
           <input type="date" id="rDate" onchange="onPuestoOrDateChange()">
+        </div>
+        <div class="field" id="eventoWrap" style="display:none;">
+          <label>Evento <span style="color:var(--red)">*</span></label>
+          <input type="text" id="rEvento" placeholder="Título o descripción del evento…" maxlength="100">
         </div>
       </div>
       <div class="week-bar-wrap" id="weekBarWrapP" style="display:none">
@@ -855,7 +871,64 @@ function doLogout(){
   currentUser=null; safeRemove('face_advisor');
   document.getElementById('loginOverlay').style.display='flex';
   document.getElementById('userBox').style.display='none';
+  const panel=document.getElementById('userDropdownPanel');
+  if(panel) panel.style.display='none';
 }
+
+async function toggleUserDropdown(){
+  const panel=document.getElementById('userDropdownPanel');
+  if(panel.style.display==='block'){ panel.style.display='none'; return; }
+  panel.innerHTML='<p style="color:var(--muted);font-size:12px;text-align:center;padding:8px 0">Cargando…</p>';
+  panel.style.display='block';
+  await populateUserDropdown();
+}
+
+async function populateUserDropdown(){
+  const panel=document.getElementById('userDropdownPanel');
+  const adv=findAdvisor(currentUser);
+  const limS=adv?.limiteHoras||0, limP=adv?.limiteHorasPuesto||0, limE=adv?.limiteHorasEscenario||0;
+  const today=new Date(); const day=today.getDay(); const diff=day===0?-6:1-day;
+  const wMon=new Date(today); wMon.setDate(today.getDate()+diff);
+  const wSun=new Date(wMon); wSun.setDate(wMon.getDate()+6);
+  const wS=wMon.toISOString().slice(0,10), wE=wSun.toISOString().slice(0,10);
+  let usedS=0, usedP=0, usedE=0;
+  try{
+    const r=await fetch(API_URL); const all=await r.json();
+    usedS=(Array.isArray(all)?all:[]).filter(b=>normalizeName(b.advisor)===normalizeName(currentUser)&&b.date>=wS&&b.date<=wE).reduce((s,b)=>s+(b.duration||1),0);
+  }catch{}
+  try{
+    const r=await fetch(`${API_URL}?action=reservasPuestos`); const all=await r.json();
+    const list=Array.isArray(all)?all:[];
+    usedP=list.filter(b=>normalizeName(b.advisor)===normalizeName(currentUser)&&b.date>=wS&&b.date<=wE&&b.puesto!=='ESCENARIO').reduce((s,b)=>s+(b.duration||1),0);
+    usedE=list.filter(b=>normalizeName(b.advisor)===normalizeName(currentUser)&&b.date>=wS&&b.date<=wE&&b.puesto==='ESCENARIO').reduce((s,b)=>s+(b.duration||1),0);
+  }catch{}
+  function bar(used,lim){
+    if(!lim) return '';
+    const pct=Math.min(100,Math.round(used/lim*100));
+    const col=pct>=90?'var(--red)':pct>=70?'var(--amber)':'var(--green)';
+    return `<div style="background:#E3E6F0;border-radius:99px;height:5px;margin-top:5px;"><div style="width:${pct}%;height:5px;border-radius:99px;background:${col};"></div></div>`;
+  }
+  function row(icon,label,used,lim){
+    const avail=Math.max(0,lim-used);
+    const col=avail===0?'var(--red)':avail<=lim*.25?'var(--amber)':'var(--dark)';
+    return `<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;"><span style="font-weight:600;color:var(--ink)">${icon} ${label}</span><span style="font-weight:700;color:${col}">${avail}h libres <span style="font-weight:400;color:var(--muted);font-size:11px">(${used}/${lim}h)</span></span></div>${bar(used,lim)}</div>`;
+  }
+  panel.innerHTML=`
+    <div style="font-weight:700;font-size:14px;color:var(--dark);margin-bottom:4px;">${currentUser}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">Horas disponibles esta semana</div>
+    ${row('🏢','Salas de Juntas',usedS,limS)}
+    ${row('🗂','Puestos de Trabajo',usedP,limP)}
+    ${row('🎭','Escenario',usedE,limE)}
+    <p style="font-size:10px;color:var(--muted);margin-top:4px;padding-top:10px;border-top:1px solid var(--border);line-height:1.6;">Estos límites se renuevan cada semana. Si crees que estás llegando o superando tu límite constantemente, comunícate con el área administrativa.</p>
+  `;
+}
+
+document.addEventListener('click', e=>{
+  const box=document.getElementById('userBox');
+  const panel=document.getElementById('userDropdownPanel');
+  if(panel&&box&&!box.contains(e.target)) panel.style.display='none';
+});
+
 function onAfterLogin(){
   const m=new URLSearchParams(location.search).get('m')||'salas';
   switchModule(m);
@@ -1207,25 +1280,35 @@ function renderMap(){
   });
   const escRect=document.getElementById('escenarioRect');
   const escLbl=document.getElementById('escenarioLbl');
+  const escStatus=document.getElementById('escenarioStatus');
   const escAdv=document.getElementById('escenarioAdv');
   const escTime=document.getElementById('escenarioTime');
+  const escHint=document.getElementById('escenarioHint');
   const escGrp=document.getElementById('escenarioGroup');
   if(escBk){
     const isMe=normalizeName(escBk.advisor)===normalizeName(currentUser);
     escRect.setAttribute('fill',isMe?'url(#gradGreen)':'url(#gradNavy)');
     escRect.setAttribute('stroke',isMe?'#0F7A41':'#1E2A63');
     escLbl.setAttribute('fill','#fff');
-    escAdv.textContent=shortName(escBk.advisor);
-    escAdv.setAttribute('fill','rgba(255,255,255,.9)');
+    if(escBk.evento){
+      escStatus.textContent=`🎭 ${escBk.evento}`; escStatus.setAttribute('fill','rgba(255,255,255,.95)');
+      escAdv.textContent=`por ${shortName(escBk.advisor)}`; escAdv.setAttribute('fill','rgba(255,255,255,.8)');
+    } else {
+      escStatus.textContent='Ocupado'; escStatus.setAttribute('fill','rgba(255,255,255,.8)');
+      escAdv.textContent=shortName(escBk.advisor); escAdv.setAttribute('fill','rgba(255,255,255,.9)');
+    }
     const s2=parseInt(escBk.time.split(':')[0],10),dur2=escBk.duration||1;
     escTime.textContent=`${pad2(s2)}:00–${pad2(s2+dur2)}:00`;
     escTime.setAttribute('fill','rgba(255,255,255,.7)');
+    if(escHint) escHint.setAttribute('fill','rgba(255,255,255,0)');
     escGrp.onclick=()=>showDeskInfo({id:'ESCENARIO',label:'Escenario'},escBk,isMe?'mine':'other');
   } else {
-    escRect.setAttribute('fill','#F0F0F0'); escRect.setAttribute('stroke','#C0C0C0');
-    escLbl.setAttribute('fill','#999');
+    escRect.setAttribute('fill','#EEF1FB'); escRect.setAttribute('stroke','#8B98D9');
+    escLbl.setAttribute('fill','#3F4FA3');
+    escStatus.textContent='Disponible'; escStatus.setAttribute('fill','#1A9E55');
     escAdv.textContent=''; escAdv.setAttribute('fill','rgba(255,255,255,0)');
     escTime.textContent=''; escTime.setAttribute('fill','rgba(255,255,255,0)');
+    if(escHint) escHint.setAttribute('fill','#8B98D9');
     escGrp.onclick=()=>openDeskBooking('ESCENARIO');
   }
   DESKS.forEach(desk=>{
@@ -1267,7 +1350,13 @@ function showDeskInfo(desk,booking,state){
   const cfg=getPuestoConfig(desk.id);
   document.getElementById('bmTitle').textContent=cfg.nombre||('Puesto '+desk.label);
   const s=parseInt(booking.time.split(':')[0],10), dur=booking.duration||1;
-  document.getElementById('bmBody').innerHTML=`<strong>Asesor:</strong> ${booking.advisor}<br><strong>Horario:</strong> ${pad2(s)}:00 – ${pad2(s+dur)}:00<br><strong>Fecha:</strong> ${fmtDate(booking.date)}`;
+  let bodyHtml='';
+  if(desk.id==='ESCENARIO'&&booking.evento){
+    bodyHtml=`<div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:6px;">🎭 ${booking.evento}</div><strong>Reservado por:</strong> ${booking.advisor}<br><strong>Horario:</strong> ${pad2(s)}:00 – ${pad2(s+dur)}:00<br><strong>Fecha:</strong> ${fmtDate(booking.date)}`;
+  } else {
+    bodyHtml=`<strong>Asesor:</strong> ${booking.advisor}<br><strong>Horario:</strong> ${pad2(s)}:00 – ${pad2(s+dur)}:00<br><strong>Fecha:</strong> ${fmtDate(booking.date)}`;
+  }
+  document.getElementById('bmBody').innerHTML=bodyHtml;
   editBookingId=booking.id;
   document.getElementById('editFormWrap').style.display='none';
   document.getElementById('editSlotsGrid').innerHTML='';
@@ -1363,6 +1452,8 @@ async function onPuestoOrDateChange(){
   document.getElementById('slotsP').innerHTML='';
   const puesto=document.getElementById('rPuesto').value;
   const date=document.getElementById('rDate').value;
+  document.getElementById('eventoWrap').style.display=(puesto==='ESCENARIO')?'block':'none';
+  if(puesto!=='ESCENARIO') document.getElementById('rEvento').value='';
   if(!puesto||!date) return;
   if(!validateDateLimit(date)){ document.getElementById('rDate').value=''; return; }
   const cfg=getPuestoConfig(puesto);
@@ -1399,19 +1490,26 @@ function onHoraFinChange(){
   if(!selectedFinP||!selectedStartP){ document.getElementById('confirmPanelP').style.display='none'; return; }
   const puesto=document.getElementById('rPuesto').value, date=document.getElementById('rDate').value;
   const cfg=getPuestoConfig(puesto); const dur=selectedFinP-selectedStartP;
-  document.getElementById('confirmBoxP').innerHTML=`<strong>${cfg.nombre||puesto}</strong><br>📅 ${fmtDate(date)}<br>🕐 ${pad2(selectedStartP)}:00 – ${pad2(selectedFinP)}:00 (${dur}h)<br>👤 ${currentUser}`;
+  const evento=document.getElementById('rEvento').value.trim();
+  let line1=`<strong>${cfg.nombre||puesto}</strong>`;
+  if(puesto==='ESCENARIO'&&evento) line1=`<strong>🎭 ${evento}</strong> <span style="font-weight:400;color:var(--muted)">by ${currentUser}</span>`;
+  document.getElementById('confirmBoxP').innerHTML=`${line1}<br>📅 ${fmtDate(date)}<br>🕐 ${pad2(selectedStartP)}:00 – ${pad2(selectedFinP)}:00 (${dur}h)${puesto!=='ESCENARIO'?`<br>👤 ${currentUser}`:''}`;
   document.getElementById('confirmPanelP').style.display='block';
 }
 
 async function confirmBookingP(){
   if(!selectedStartP||!selectedFinP) return;
+  const puesto=document.getElementById('rPuesto').value;
+  const evento=document.getElementById('rEvento').value.trim();
+  if(puesto==='ESCENARIO'&&!evento){ showToast('El campo Evento es obligatorio para el Escenario','err'); return; }
   const btn=document.getElementById('bookBtnP'); btn.disabled=true; btn.textContent='Reservando…';
   const dur=selectedFinP-selectedStartP;
-  const body={action:'createPuesto',puesto:document.getElementById('rPuesto').value,date:document.getElementById('rDate').value,time:pad2(selectedStartP)+':00',duration:dur,advisor:currentUser};
+  const body={action:'createPuesto',puesto,date:document.getElementById('rDate').value,time:pad2(selectedStartP)+':00',duration:dur,advisor:currentUser};
+  if(evento) body.evento=evento;
   try{
     const res=await fetch(API_URL,{method:'POST',body:JSON.stringify(body)});
     const data=await res.json();
-    if(data.ok){ showToast('¡Puesto reservado con éxito! ✓','ok'); selectedStartP=null; selectedFinP=null; document.getElementById('confirmPanelP').style.display='none'; document.getElementById('horaFinWrap').style.display='none'; document.getElementById('rPuesto').value=''; document.getElementById('slotsP').innerHTML=''; _weekCacheP.wStart=null; await refreshMap(); }
+    if(data.ok){ showToast('¡Puesto reservado con éxito! ✓','ok'); selectedStartP=null; selectedFinP=null; document.getElementById('confirmPanelP').style.display='none'; document.getElementById('horaFinWrap').style.display='none'; document.getElementById('rPuesto').value=''; document.getElementById('rEvento').value=''; document.getElementById('eventoWrap').style.display='none'; document.getElementById('slotsP').innerHTML=''; _weekCacheP.wStart=null; await refreshMap(); }
     else showToast(data.message||'Error al reservar','err');
   }catch{ showToast('Error de conexión','err'); }
   btn.disabled=false; btn.textContent='Reservar puesto';
@@ -1476,7 +1574,8 @@ async function loadTableP(){
       if(!past&&canEditP(b,currentUser)) btns.push(`<button onclick='openListEditP(${JSON.stringify(b)})' class="btn-inline amber">Editar</button>`);
       if(!past&&canCancelP(b,currentUser)) btns.push(`<button onclick="cancelBookingListP('${b.id}')" class="btn-inline danger">Cancelar</button>`);
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td style="font-weight:600">${cfg.nombre||b.puesto}</td><td>${fmtDate(b.date)}</td><td>${pad2(s)}:00 – ${pad2(s+dur)}:00</td><td>${b.advisor}</td><td>${badge}</td><td style="display:flex;gap:6px;flex-wrap:wrap">${btns.join('')}</td>`;
+      const eventoCell=b.puesto==='ESCENARIO'&&b.evento?`<br><span style="font-size:11px;color:var(--navy)">🎭 ${b.evento}</span>`:'';
+      tr.innerHTML=`<td style="font-weight:600">${cfg.nombre||b.puesto}${eventoCell}</td><td>${fmtDate(b.date)}</td><td>${pad2(s)}:00 – ${pad2(s+dur)}:00</td><td>${b.advisor}</td><td>${badge}</td><td style="display:flex;gap:6px;flex-wrap:wrap">${btns.join('')}</td>`;
       tbody.appendChild(tr);
     });
   }catch{ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--red)">Error al cargar</td></tr>'; }
