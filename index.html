@@ -63,6 +63,19 @@ header{
   background:#fff;border:1px solid var(--border);border-radius:12px;
   box-shadow:0 8px 32px rgba(43,54,115,.18);padding:18px;z-index:300;
 }
+#wifiPanel{
+  display:none;position:fixed;min-width:270px;
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 8px 32px rgba(43,54,115,.18);padding:16px;z-index:400;
+}
+.wifi-entry{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.wifi-entry:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+.wifi-red{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+.wifi-name{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px;}
+.wifi-pw-row{display:flex;align-items:center;gap:8px;}
+.wifi-pw{font-size:12px;font-weight:600;color:var(--ink);font-family:monospace;background:#F4F6FB;padding:3px 8px;border-radius:6px;border:1px solid var(--border);}
+.wifi-copy{font-size:10px;color:var(--navy);cursor:pointer;background:none;border:none;padding:2px 6px;border-radius:4px;font-family:'Inter',sans-serif;transition:background .12s;}
+.wifi-copy:hover{background:#EEF1FB;}
 .btn-logout{
   background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);
   color:#fff;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;
@@ -391,6 +404,7 @@ footer a:hover{text-decoration:underline;}
     <button class="tab-btn" data-stab="reservar" onclick="switchSalasTab('reservar')">Reservar sala</button>
     <button class="tab-btn" data-stab="ver" onclick="switchSalasTab('ver')">Lista de reservas</button>
     <a class="tab-btn" href="resumen.html?m=salas" target="_blank">Resumen de hoy ↗</a>
+    <button class="tab-btn" onclick="toggleWifi(event)" style="margin-left:auto;color:var(--navy);">🌐 Internet</button>
   </div>
 
   <!-- Calendario -->
@@ -501,6 +515,7 @@ footer a:hover{text-decoration:underline;}
     <button class="tab-btn" id="ptabReservar" onclick="showPuestosTab('reservar')">➕ Reservar puesto</button>
     <button class="tab-btn" id="ptabVer" onclick="showPuestosTab('ver')">📋 Lista de reservas</button>
     <a class="tab-btn" href="resumen.html?m=puestos" target="_blank">Resumen de hoy ↗</a>
+    <button class="tab-btn" onclick="toggleWifi(event)" style="margin-left:auto;color:var(--navy);">🌐 Internet</button>
   </div>
 
   <!-- Mapa -->
@@ -885,8 +900,7 @@ async function toggleUserDropdown(){
 
 async function populateUserDropdown(){
   const panel=document.getElementById('userDropdownPanel');
-  const adv=findAdvisor(currentUser);
-  const limS=adv?.limiteHoras||0, limP=adv?.limiteHorasPuesto||0, limE=adv?.limiteHorasEscenario||0;
+  const limS=getAdvisorLimit(currentUser), limP=getAdvisorLimitP(currentUser), limE=getAdvisorLimitEscenario(currentUser);
   const today=new Date(); const day=today.getDay(); const diff=day===0?-6:1-day;
   const wMon=new Date(today); wMon.setDate(today.getDate()+diff);
   const wSun=new Date(wMon); wSun.setDate(wMon.getDate()+6);
@@ -1684,6 +1698,47 @@ function exportPuestosCSV(){
 
 // Wire hora fin change
 document.getElementById('rHoraFin').addEventListener('change',onHoraFinChange);
+
+// ── Wifi panel ───────────────────────────────────────────────────────────────
+function toggleWifi(e){
+  e.stopPropagation();
+  const panel=document.getElementById('wifiPanel');
+  if(panel.style.display==='block'){ panel.style.display='none'; return; }
+  const rect=e.currentTarget.getBoundingClientRect();
+  panel.style.top=(rect.bottom+6)+'px';
+  panel.style.left=Math.min(rect.left,window.innerWidth-290)+'px';
+  panel.style.display='block';
+}
+function copyWifi(text,btn){
+  navigator.clipboard.writeText(text).then(()=>{ btn.textContent='✓ Copiado'; setTimeout(()=>btn.textContent='Copiar',1500); });
+}
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('wifiPanel');
+  if(panel&&!panel.contains(e.target)) panel.style.display='none';
+},{capture:true,passive:true});
 </script>
+
+<!-- Wifi panel -->
+<div id="wifiPanel">
+  <div style="font-weight:700;font-size:13px;color:var(--dark);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">🌐 Redes de Internet</div>
+  <div class="wifi-entry">
+    <div class="wifi-red">Red</div>
+    <div class="wifi-name">ASESORES | FACE</div>
+    <div class="wifi-red" style="margin-top:6px;">Contraseña</div>
+    <div class="wifi-pw-row">
+      <span class="wifi-pw">HolisticWealth</span>
+      <button class="wifi-copy" onclick="copyWifi('HolisticWealth',this)">Copiar</button>
+    </div>
+  </div>
+  <div class="wifi-entry">
+    <div class="wifi-red">Red</div>
+    <div class="wifi-name">INVITADOS | FACE</div>
+    <div class="wifi-red" style="margin-top:6px;">Contraseña</div>
+    <div class="wifi-pw-row">
+      <span class="wifi-pw">FACEFinancialAdvisors</span>
+      <button class="wifi-copy" onclick="copyWifi('FACEFinancialAdvisors',this)">Copiar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
