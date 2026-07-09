@@ -259,8 +259,9 @@ function readPuestosConfig() {
       const fijo = idx.puestoFijo >= 0 ? String(row[idx.puestoFijo]).trim() : "";
       const fijoVal = (fijo === "" || fijo.toLowerCase() === "false") ? "" : fijo;
       // Horario del bloqueo fijo: si no hay horas válidas se bloquea todo el día (07–20)
-      let hIn  = idx.horaEntrada>=0 ? parseInt(String(row[idx.horaEntrada]).split(":")[0],10) : NaN;
-      let hOut = idx.horaSalida>=0  ? parseInt(String(row[idx.horaSalida]).split(":")[0],10)  : NaN;
+      // Acepta número (9), texto ("9" o "9:00") o celda con formato de hora (Date)
+      let hIn  = idx.horaEntrada>=0 ? parseHoraCell(row[idx.horaEntrada]) : NaN;
+      let hOut = idx.horaSalida>=0  ? parseHoraCell(row[idx.horaSalida])  : NaN;
       if (isNaN(hIn)  || hIn  < 7 || hIn  > 19) hIn  = 7;
       if (isNaN(hOut) || hOut <= hIn || hOut > 20) hOut = 20;
       return {
@@ -272,6 +273,21 @@ function readPuestosConfig() {
         horaSalida:  hOut
       };
     });
+}
+
+/** Convierte una celda de hora a número entero de hora (9, "9", "9:00", 09:00 como Date, o fracción de día). */
+function parseHoraCell(v) {
+  if (v === "" || v === null || v === undefined) return NaN;
+  if (v instanceof Date) {
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    return parseInt(Utilities.formatDate(v, tz, "H"), 10);
+  }
+  if (typeof v === "number") {
+    if (v > 0 && v < 1) return Math.round(v * 24); // fracción de día (formato hora de Sheets)
+    return Math.floor(v);
+  }
+  const n = parseInt(String(v).split(":")[0], 10);
+  return isNaN(n) ? NaN : n;
 }
 
 // ─── Normalización de nombres ─────────────────────────────────────────────────
