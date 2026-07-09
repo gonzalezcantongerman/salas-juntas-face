@@ -296,6 +296,7 @@ function isAdmin(name, advisors) {
 // ─── Endpoints ───────────────────────────────────────────────────────────────
 
 function doGet(e) {
+  e = e || { parameter: {} };   // permite ejecutarlo manualmente desde el editor
   const action = e.parameter.action;
   const date   = e.parameter.date;
 
