@@ -1765,7 +1765,12 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   const saved=safeGet('face_advisor');
   if(saved){
     const rec=advisorsData.find(a=>a.nombre===saved);
-    if(rec&&rec.activo){ currentUser=saved; }
+    if(rec&&rec.activo&&rec.tienePassword){
+      // Usuario con contraseña: siempre pedir el PIN al entrar (sin auto-login)
+      const sel=document.getElementById('loginSelect');
+      if([...sel.options].some(o=>o.value===saved)){ sel.value=saved; onLoginSelectChange(); }
+    }
+    else if(rec&&rec.activo){ currentUser=saved; }
     else if(!rec){ currentUser=saved; } // offline fallback
     else { safeRemove('face_advisor'); showToast('Tu acceso fue desactivado. Contacta a un administrador.','err'); }
   }

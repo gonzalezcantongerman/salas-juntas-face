@@ -477,30 +477,55 @@ function deltaHtml(cur,prev,suffix=''){
 async function loadData(){
   document.getElementById('loadingOverlay').style.display='flex';
   try{
-    const[a,s,p]=await Promise.all([
+    const[a,s,p,pc]=await Promise.all([
       fetch(`${API}?action=advisors`).then(r=>r.json()),
       fetch(API).then(r=>r.json()),
       fetch(`${API}?action=reservasPuestos`).then(r=>r.json()),
+      fetch(`${API}?action=puestos`).then(r=>r.json()),
     ]);
     allAdv=Array.isArray(a)?a:[];
     salasAll=Array.isArray(s)?s:[];
-    puestosAll=Array.isArray(p)?p:[];
+    const reales=Array.isArray(p)?p:[];
+    puestosAll=[...reales,...buildFixedBookings(Array.isArray(pc)?pc:[],reales)];
   }catch(e){console.error(e);}
   document.getElementById('loadingOverlay').style.display='none';
   render();
+}
+
+// Genera las horas de puestos fijos (horaEntrada–horaSalida, días hábiles, últimos 98 días)
+// para que se contabilicen como uso real de la infraestructura.
+function buildFixedBookings(cfgList,reales){
+  const out=[];
+  const today=new Date();
+  const realKey=new Set(reales.map(b=>b.puesto+'|'+b.date));
+  cfgList.forEach(c=>{
+    if(!c.puestoFijo||String(c.puestoFijo).toLowerCase()==='true')return; // solo asignaciones con nombre
+    const hIn=Number(c.horaEntrada)||7, hOut=Number(c.horaSalida)||20;
+    const dur=hOut-hIn;
+    if(dur<=0)return;
+    for(let i=0;i<98;i++){
+      const d=new Date(today);d.setDate(today.getDate()-i);
+      if(d.getDay()===0||d.getDay()===6)continue;
+      const ds=toStr(d);
+      if(realKey.has(c.id+'|'+ds))continue; // no duplicar si ese día hay reserva real
+      out.push({id:'fx_'+c.id+'_'+ds,puesto:c.id,date:ds,time:String(hIn).padStart(2,'0')+':00',duration:dur,advisor:c.puestoFijo,fixed:true});
+    }
+  });
+  return out;
 }
 
 // ─── Compute ──────────────────────────────────────────────────────────────────
 function computeFor(filterFn){
   const{s,e}=periodBounds();
   const salas   = salasAll.filter(b=>filterFn(b.date));
-  const puestos = puestosAll.filter(b=>filterFn(b.date)&&b.puesto!=='ESCENARIO'&&!b.fixed);
-  const esc     = puestosAll.filter(b=>filterFn(b.date)&&b.puesto==='ESCENARIO'&&!b.fixed);
+  const puestos = puestosAll.filter(b=>filterFn(b.date)&&b.puesto!=='ESCENARIO');
+  const esc     = puestosAll.filter(b=>filterFn(b.date)&&b.puesto==='ESCENARIO');
   const hS=salas.reduce((a,b)=>a+(b.duration||1),0);
   const hP=puestos.reduce((a,b)=>a+(b.duration||1),0);
   const hE=esc.reduce((a,b)=>a+(b.duration||1),0);
   const hTotal=hS+hP+hE;
-  const totalBk=salas.length+puestos.length+esc.length;
+  // Las horas de puestos fijos cuentan como uso, pero no como "reservas" hechas
+  const totalBk=salas.length+puestos.filter(b=>!b.fixed).length+esc.length;
   const activeAdv=new Set([...salas,...puestos,...esc].map(b=>norm(b.advisor))).size;
   return{salas,puestos,esc,hS,hP,hE,hTotal,totalBk,activeAdv};
 }
@@ -519,7 +544,7 @@ function compute(){
   const addMap=(list,type)=>list.forEach(b=>{
     const k=norm(b.advisor);
     if(!aMap[k])aMap[k]={nombre:b.advisor,hS:0,hP:0,hE:0,total:0,bk:0};
-    aMap[k][type]+=(b.duration||1);aMap[k].total+=(b.duration||1);aMap[k].bk++;
+    aMap[k][type]+=(b.duration||1);aMap[k].total+=(b.duration||1);if(!b.fixed)aMap[k].bk++;
   });
   addMap(salas,'hS');addMap(puestos,'hP');addMap(esc,'hE');
 
@@ -576,7 +601,7 @@ function renderKPIs(m){
   const wk=Math.max(1,Math.round(workDays(s,e)/5*10)/10);
   document.getElementById('kpiRes').textContent=m.totalBk.toLocaleString();
   document.getElementById('kpiResDelta').innerHTML=deltaHtml(m.totalBk,m.prvBk);
-  document.getElementById('kpiResSub').textContent=`${m.salas.length} salas · ${m.puestos.length} puestos · ${m.esc.length} esc.`;
+  document.getElementById('kpiResSub').textContent=`${m.salas.length} salas · ${m.puestos.filter(b=>!b.fixed).length} puestos · ${m.esc.length} esc.`;
   document.getElementById('kpiHrs').textContent=m.hTotal+'h';
   document.getElementById('kpiHrsDelta').innerHTML=deltaHtml(m.hTotal,m.prvHrs,'h');
   document.getElementById('kpiHrsSub').textContent=`${wk} sem · cap. total ${m.capS+m.capP+m.capE}h`;
@@ -600,7 +625,7 @@ function renderCapsules(m){
     document.getElementById('cs'+pfx+'Adv').textContent=advSet;
   };
   set('Salas',m.hS,m.capS,m.salas.length,m.advSetS);
-  set('Puestos',m.hP,m.capP,m.puestos.length,m.advSetP);
+  set('Puestos',m.hP,m.capP,m.puestos.filter(b=>!b.fixed).length,m.advSetP);
   set('Esc',m.hE,m.capE,m.esc.length,m.advSetE);
 }
 
@@ -657,7 +682,7 @@ function renderCharts(m){
     const mon=new Date(ref);mon.setDate(ref.getDate()+diff);
     const sun=new Date(mon);sun.setDate(mon.getDate()+6);
     const ws=toStr(mon),we=toStr(sun);
-    const inW=b=>b.date>=ws&&b.date<=we&&!b.fixed;
+    const inW=b=>b.date>=ws&&b.date<=we;
     weekData.push({
       label:`${mon.getDate()}/${mon.getMonth()+1}`,
       hS:salasAll.filter(inW).reduce((a,b)=>a+(b.duration||1),0),
@@ -697,7 +722,7 @@ function renderCharts(m){
 
   // Peak hours
   const hBuckets=new Array(H_END-H_START).fill(0);
-  [...salasAll,...puestosAll].filter(b=>!b.fixed).forEach(b=>{
+  [...salasAll,...puestosAll].forEach(b=>{
     const st=parseInt((b.time||'').split(':')[0],10),dur=b.duration||1;
     for(let h=0;h<dur;h++){const idx=st+h-H_START;if(idx>=0&&idx<hBuckets.length)hBuckets[idx]++;}
   });
@@ -729,7 +754,7 @@ function renderCharts(m){
 
   // Demand by day of week (hours booked per weekday, all records)
   const dayBuckets=new Array(7).fill(0); // 0=Lun … 6=Dom
-  [...salasAll,...puestosAll].filter(b=>!b.fixed&&b.date).forEach(b=>{
+  [...salasAll,...puestosAll].filter(b=>b.date).forEach(b=>{
     const d=new Date(b.date+'T12:00:00Z');
     const dw=d.getUTCDay(); // 0=Dom
     const idx=dw===0?6:dw-1;
@@ -898,7 +923,7 @@ function showDetail(adv){
     const mon=new Date(ref);mon.setDate(ref.getDate()+diff);
     const sun=new Date(mon);sun.setDate(mon.getDate()+6);
     const ws=toStr(mon),we=toStr(sun);
-    const inW=b=>b.date>=ws&&b.date<=we&&norm(b.advisor)===norm(adv.nombre)&&!b.fixed;
+    const inW=b=>b.date>=ws&&b.date<=we&&norm(b.advisor)===norm(adv.nombre);
     wks.push({
       label:`${mon.getDate()}/${mon.getMonth()+1}`,
       hS:salasAll.filter(inW).reduce((a,b)=>a+(b.duration||1),0),
