@@ -775,6 +775,64 @@ function jsonResponse(obj){
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
+// ─── Puestos fijos → reservas reales ─────────────────────────────────────────
+
+/**
+ * Materializa las horas de los puestos fijos como reservas reales en la hoja
+ * ReservasPuestos (horaEntrada–horaSalida, solo días hábiles), para que se
+ * contabilicen igual que cualquier otra reserva.
+ * Cubre hoy + los próximos 7 días naturales. No duplica si ya existe una
+ * reserva de ese puesto ese día. Corre diario con el trigger.
+ */
+function materializarPuestosFijos() {
+  const sheet = getReservasPuestosSheet();
+  const fijos = readPuestosConfig().filter(p => p.puestoFijo && p.puestoFijo.toLowerCase() !== "true");
+  if (!fijos.length) { Logger.log("No hay puestos fijos con asesor asignado."); return; }
+
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const data = sheet.getDataRange().getValues();
+    const idx = buildIdx(data[0], ["puesto","date"]);
+    const existing = new Set();
+    for (let i = 1; i < data.length; i++)
+      existing.add(String(data[i][idx.puesto]) + "|" + normalizeDate(data[i][idx.date]));
+
+    const tz = Session.getScriptTimeZone();
+    const today = new Date();
+    let added = 0;
+    for (let d = 0; d <= 7; d++) {
+      const day = new Date(today); day.setDate(today.getDate() + d);
+      const dow = day.getDay(); if (dow === 0 || dow === 6) continue; // solo días hábiles
+      const ds = Utilities.formatDate(day, tz, "yyyy-MM-dd");
+      fijos.forEach(p => {
+        if (existing.has(p.id + "|" + ds)) return;
+        const dur = p.horaSalida - p.horaEntrada;
+        if (dur <= 0) return;
+        const row = sheet.getLastRow() + 1;
+        sheet.getRange(row, 4).setNumberFormat("@"); // columna time como texto
+        sheet.getRange(row, 1, 1, 8).setValues([[
+          "fijo_" + p.id + "_" + ds, p.id, ds,
+          String(p.horaEntrada).padStart(2,"0") + ":00",
+          dur, p.puestoFijo, new Date(), ""
+        ]]);
+        existing.add(p.id + "|" + ds);
+        added++;
+      });
+    }
+    Logger.log(added + " reservas de puesto fijo creadas.");
+  } finally { lock.releaseLock(); }
+}
+
+/** Corre UNA vez: instala el trigger diario (6 a.m.) y materializa de inmediato. */
+function instalarTriggerPuestosFijos() {
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (t.getHandlerFunction() === "materializarPuestosFijos") ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger("materializarPuestosFijos").timeBased().everyDays(1).atHour(6).create();
+  materializarPuestosFijos();
+  Logger.log("Trigger diario instalado (6:00 a.m.) y reservas materializadas.");
+}
+
 // ─── Migración: agregar columna "evento" a ReservasPuestos ─────────────────
 function migrateEventoColumn() {
   const s = getReservasPuestosSheet();
