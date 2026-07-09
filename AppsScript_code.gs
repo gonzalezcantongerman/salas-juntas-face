@@ -17,6 +17,15 @@ const SHEET_NAME               = "Reservas";
 const ADVISORS_SHEET_NAME      = "Asesores";
 const PUESTOS_CONFIG_SHEET     = "Puestos de Trabajo";
 const RESERVAS_PUESTOS_SHEET   = "ReservasPuestos";
+const CONFIG_SHEET             = "Config";
+
+// Flags de configuración (editables desde la hoja "Config" con TRUE/FALSE)
+const CONFIG_DEFAULTS = {
+  soloUnPuestoALaVez:        true,   // un asesor solo puede tener 1 puesto de trabajo en el mismo horario
+  permitirReservasSimultaneas: false, // permitir salas + puestos + escenario al mismo tiempo
+  reglaCancelacionAnticipada: true,  // exigir 2h (salas) / 12h (puestos) de anticipación para cancelar
+  reglaNoCancelarEjecutadas:  true   // impedir cancelar reservas que ya ocurrieron
+};
 
 const DEFAULT_ADMINS       = ["Ferdinando Santiago Hoyos","Pablo Noriega Bello","Germán González Cantón"];
 const DEFAULT_WEEKLY_LIMIT = 999;
@@ -139,6 +148,70 @@ function migratePuestosSheet() {
   }
 }
 
+function getConfigSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let s = ss.getSheetByName(CONFIG_SHEET);
+  if (!s) {
+    s = ss.insertSheet(CONFIG_SHEET);
+    s.appendRow(["clave","valor","descripcion"]);
+    s.appendRow(["soloUnPuestoALaVez", true, "Un asesor solo puede tener 1 puesto de trabajo en el mismo horario"]);
+    s.appendRow(["permitirReservasSimultaneas", false, "Permitir reservar salas + puestos + escenario al mismo tiempo"]);
+    s.appendRow(["reglaCancelacionAnticipada", true, "Exigir anticipación para cancelar (2h salas / 12h puestos)"]);
+    s.appendRow(["reglaNoCancelarEjecutadas", true, "Impedir cancelar reservas que ya ocurrieron"]);
+    s.getRange(1,1,1,3).setFontWeight("bold");
+    s.setFrozenRows(1);
+  }
+  return s;
+}
+
+function readConfig() {
+  const cfg = Object.assign({}, CONFIG_DEFAULTS);
+  try {
+    const s = getConfigSheet();
+    const data = s.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      const clave = String(data[i][0]).trim();
+      if (!clave || !(clave in cfg)) continue;
+      const v = data[i][1];
+      cfg[clave] = v === true || String(v).toLowerCase() === "true";
+    }
+  } catch (e) { /* defaults */ }
+  return cfg;
+}
+
+/** Corre una vez para crear la hoja Config (si no existe se crea sola al primer uso). */
+function migrateConfigSheet() {
+  getConfigSheet();
+  Logger.log("Hoja Config lista.");
+}
+
+/** Corre una vez: agrega columnas horaEntrada y horaSalida a "Puestos de Trabajo". */
+function migratePuestosHorario() {
+  const s = getPuestosConfigSheet();
+  const headers = s.getRange(1,1,1,s.getLastColumn()).getValues()[0];
+  ["horaEntrada","horaSalida"].forEach(h => {
+    if (headers.indexOf(h) === -1) {
+      const col = s.getLastColumn() + 1;
+      s.getRange(1, col).setValue(h).setFontWeight("bold");
+      Logger.log("Columna " + h + " agregada a Puestos de Trabajo.");
+    }
+  });
+}
+
+/** Corre una vez: agrega columna contrasena a "Asesores" (vacía = no pide contraseña). */
+function migratePasswordColumn() {
+  const s = getAdvisorsSheet();
+  const headers = s.getRange(1,1,1,s.getLastColumn()).getValues()[0];
+  if (headers.indexOf("contrasena") === -1) {
+    const col = s.getLastColumn() + 1;
+    s.getRange(1, col).setValue("contrasena").setFontWeight("bold");
+    s.getRange(2, col, Math.max(1, s.getLastRow()-1), 1).setNumberFormat("@"); // texto para conservar ceros a la izquierda
+    Logger.log("Columna contrasena agregada a Asesores.");
+  } else {
+    Logger.log("La columna contrasena ya existe.");
+  }
+}
+
 function getReservasPuestosSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let s = ss.getSheetByName(RESERVAS_PUESTOS_SHEET);
@@ -157,7 +230,7 @@ function readAdvisors() {
   const s = getAdvisorsSheet();
   const data = s.getDataRange().getValues();
   const headers = data.shift();
-  const idx = buildIdx(headers, ["nombre","activo","esAdmin","limiteHorasSemanales","limiteHorasPuestoSemanales","limiteHorasEscenario"]);
+  const idx = buildIdx(headers, ["nombre","activo","esAdmin","limiteHorasSemanales","limiteHorasPuestoSemanales","limiteHorasEscenario","contrasena"]);
   return data
     .filter(row => String(row[idx.nombre]).trim() !== "")
     .map(row => ({
@@ -169,7 +242,9 @@ function readAdvisors() {
       limiteHorasPuesto:    idx.limiteHorasPuestoSemanales>=0 && Number(row[idx.limiteHorasPuestoSemanales])>0
                               ? Number(row[idx.limiteHorasPuestoSemanales]) : DEFAULT_WEEKLY_LIMIT,
       limiteHorasEscenario: idx.limiteHorasEscenario>=0 && Number(row[idx.limiteHorasEscenario])>0
-                              ? Number(row[idx.limiteHorasEscenario]) : DEFAULT_WEEKLY_LIMIT
+                              ? Number(row[idx.limiteHorasEscenario]) : DEFAULT_WEEKLY_LIMIT,
+      // NUNCA exponemos la contraseña — solo si tiene una configurada
+      tienePassword:        idx.contrasena>=0 && String(row[idx.contrasena]||'').trim() !== ""
     }));
 }
 
@@ -177,17 +252,24 @@ function readPuestosConfig() {
   const s = getPuestosConfigSheet();
   const data = s.getDataRange().getValues();
   const headers = data.shift();
-  const idx = buildIdx(headers, ["id","nombre","disponible","puestoFijo"]);
+  const idx = buildIdx(headers, ["id","nombre","disponible","puestoFijo","horaEntrada","horaSalida"]);
   return data
     .filter(row => String(row[idx.id]).trim() !== "")
     .map(row => {
       const fijo = idx.puestoFijo >= 0 ? String(row[idx.puestoFijo]).trim() : "";
       const fijoVal = (fijo === "" || fijo.toLowerCase() === "false") ? "" : fijo;
+      // Horario del bloqueo fijo: si no hay horas válidas se bloquea todo el día (07–20)
+      let hIn  = idx.horaEntrada>=0 ? parseInt(String(row[idx.horaEntrada]).split(":")[0],10) : NaN;
+      let hOut = idx.horaSalida>=0  ? parseInt(String(row[idx.horaSalida]).split(":")[0],10)  : NaN;
+      if (isNaN(hIn)  || hIn  < 7 || hIn  > 19) hIn  = 7;
+      if (isNaN(hOut) || hOut <= hIn || hOut > 20) hOut = 20;
       return {
-        id:         String(row[idx.id]).trim(),
-        nombre:     String(row[idx.nombre]).trim(),
-        disponible: row[idx.disponible]===true || String(row[idx.disponible]).toLowerCase()==="true",
-        puestoFijo: fijoVal   // "" = libre, "true" = bloqueado sin nombre, o nombre del asesor
+        id:          String(row[idx.id]).trim(),
+        nombre:      String(row[idx.nombre]).trim(),
+        disponible:  row[idx.disponible]===true || String(row[idx.disponible]).toLowerCase()==="true",
+        puestoFijo:  fijoVal,   // "" = libre, "true" = bloqueado sin nombre, o nombre del asesor
+        horaEntrada: hIn,
+        horaSalida:  hOut
       };
     });
 }
@@ -220,6 +302,9 @@ function doGet(e) {
   // Catálogo de asesores
   if (action === "advisors") return jsonResponse(readAdvisors());
 
+  // Configuración de reglas (flags TRUE/FALSE de la hoja Config)
+  if (action === "config") return jsonResponse(readConfig());
+
   // Configuración de puestos
   if (action === "puestos") return jsonResponse(readPuestosConfig());
 
@@ -247,15 +332,15 @@ function doGet(e) {
       pConfig.forEach(pc => {
         if (!pc.puestoFijo) return;
         const advisorFijo = pc.puestoFijo.toLowerCase() === "true" ? "—" : pc.puestoFijo;
-        // Solo inyectar si no hay ya una reserva real que cubra todo el día
+        // Solo inyectar si no hay ya una reserva real que cubra ese horario
         const alreadyCovered = rows.some(r => r.puesto === pc.id && r.date === date);
         if (!alreadyCovered) {
           rows.push({
             id:       "fixed_" + pc.id + "_" + date,
             puesto:   pc.id,
             date:     date,
-            time:     "07:00",
-            duration: 13,   // 07:00–20:00
+            time:     String(pc.horaEntrada).padStart(2,"0") + ":00",
+            duration: pc.horaSalida - pc.horaEntrada,   // horario configurado en la hoja
             advisor:  advisorFijo,
             fixed:    true
           });
@@ -287,6 +372,7 @@ function doGet(e) {
 function doPost(e) {
   const body = JSON.parse(e.postData.contents);
 
+  if (body.action === "verifyPin")     return handleVerifyPin(body);
   if (body.action === "create")        return handleCreate(getSheet(), body);
   if (body.action === "edit")          return handleEdit(getSheet(), body);
   if (body.action === "cancel")        return handleCancel(getSheet(), body);
@@ -297,29 +383,54 @@ function doPost(e) {
   return jsonResponse({ ok:false, message:"Acción no reconocida." });
 }
 
+// ─── Verificación de PIN ─────────────────────────────────────────────────────
+
+function handleVerifyPin(body) {
+  const { advisor, pin } = body;
+  if (!advisor) return jsonResponse({ok:false, message:"Falta el asesor."});
+  const s = getAdvisorsSheet();
+  const data = s.getDataRange().getValues();
+  const headers = data[0];
+  const idx = buildIdx(headers, ["nombre","contrasena"]);
+  if (idx.contrasena < 0) return jsonResponse({ok:true}); // sin columna = sin contraseñas
+  for (let i = 1; i < data.length; i++) {
+    if (normalizeName(data[i][idx.nombre]) !== normalizeName(advisor)) continue;
+    const stored = String(data[i][idx.contrasena]||'').trim();
+    if (stored === "") return jsonResponse({ok:true}); // sin contraseña configurada = pasa directo
+    if (stored === String(pin||'').trim()) return jsonResponse({ok:true});
+    return jsonResponse({ok:false, message:"Contraseña incorrecta."});
+  }
+  return jsonResponse({ok:false, message:"Asesor no encontrado."});
+}
+
 // ─── Validaciones comunes ────────────────────────────────────────────────────
 
-/** Verifica si el asesor ya tiene reserva en salas O puestos en ese horario.
- *  Los administradores están exentos — llama esta función solo para no-admins. */
-function advisorHasConcurrentBooking(advisor, date, startH, duration, excludeId) {
-  // Salas
-  const sd = getSheet().getDataRange().getValues();
-  if(sd.length > 1){
-    const si = buildIdx(sd[0], ['id','date','time','duration','advisor']);
-    for(let i=1;i<sd.length;i++){
-      const r=sd[i]; if(r[si.id]===excludeId) continue;
-      if(normalizeName(r[si.advisor])!==normalizeName(advisor)) continue;
-      if(normalizeDate(r[si.date])!==date) continue;
-      const s=startHour(r[si.time]), d2=Math.max(1,Number(r[si.duration])||1);
-      if(rangesOverlap(startH,startH+duration,s,s+d2)) return true;
+/** Verifica reservas simultáneas del asesor según la configuración:
+ *  - scope 'all': cualquier reserva (salas + puestos + escenario) que se cruce
+ *  - scope 'puestos': solo otros puestos de trabajo (no escenario) que se crucen */
+function advisorHasConcurrentBooking(advisor, date, startH, duration, excludeId, scope) {
+  scope = scope || 'all';
+  if (scope === 'all') {
+    // Salas
+    const sd = getSheet().getDataRange().getValues();
+    if(sd.length > 1){
+      const si = buildIdx(sd[0], ['id','date','time','duration','advisor']);
+      for(let i=1;i<sd.length;i++){
+        const r=sd[i]; if(r[si.id]===excludeId) continue;
+        if(normalizeName(r[si.advisor])!==normalizeName(advisor)) continue;
+        if(normalizeDate(r[si.date])!==date) continue;
+        const s=startHour(r[si.time]), d2=Math.max(1,Number(r[si.duration])||1);
+        if(rangesOverlap(startH,startH+duration,s,s+d2)) return true;
+      }
     }
   }
   // Puestos
   const pd = getReservasPuestosSheet().getDataRange().getValues();
   if(pd.length > 1){
-    const pi = buildIdx(pd[0], ['id','date','time','duration','advisor']);
+    const pi = buildIdx(pd[0], ['id','puesto','date','time','duration','advisor']);
     for(let i=1;i<pd.length;i++){
       const r=pd[i]; if(r[pi.id]===excludeId) continue;
+      if(scope==='puestos' && String(r[pi.puesto])==='ESCENARIO') continue;
       if(normalizeName(r[pi.advisor])!==normalizeName(advisor)) continue;
       if(normalizeDate(r[pi.date])!==date) continue;
       const s=startHour(r[pi.time]), d2=Math.max(1,Number(r[pi.duration])||1);
@@ -339,12 +450,19 @@ function handleCreate(sheet, body) {
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const advisors = readAdvisors();
+    const cfg = readConfig();
     const rec = findAdvisor(advisor, advisors);
     if (!rec)       return jsonResponse({ok:false,message:"Asesor no encontrado. Contacta a un administrador."});
     if (!rec.activo) return jsonResponse({ok:false,message:"Tu cuenta está desactivada."});
 
+    // Quien solicita puede ser un admin reservando a nombre de otro asesor
+    const actor = body.solicitante || advisor;
+    const actorEsAdmin = isAdmin(actor, advisors);
+    if (body.solicitante && normalizeName(body.solicitante)!==normalizeName(advisor) && !actorEsAdmin)
+      return jsonResponse({ok:false,message:"Solo un administrador puede reservar a nombre de otro asesor."});
+
     // Máximo 1 mes de anticipación (no-admins)
-    if(!isAdmin(advisor, advisors)){
+    if(!actorEsAdmin){
       const maxD=new Date(); maxD.setMonth(maxD.getMonth()+1);
       if(new Date(date+'T12:00:00Z')>maxD)
         return jsonResponse({ok:false,message:`Solo puedes reservar con máximo 1 mes de anticipación (hasta el ${maxD.toISOString().slice(0,10)}).`});
@@ -360,8 +478,8 @@ function handleCreate(sheet, body) {
     });
     if (conflict) return jsonResponse({ok:false,message:"Ese horario se cruza con otra reserva existente."});
 
-    // Reserva simultánea del mismo asesor (no-admins)
-    if(!isAdmin(advisor, advisors) && advisorHasConcurrentBooking(advisor, date, newStart, duration, null))
+    // Reserva simultánea del mismo asesor (configurable, no-admins)
+    if(!actorEsAdmin && !cfg.permitirReservasSimultaneas && advisorHasConcurrentBooking(advisor, date, newStart, duration, null, 'all'))
       return jsonResponse({ok:false,message:"Ya tienes una reserva en ese horario. No puedes tener dos reservas simultáneas."});
 
     const wStart=weekStart(date), wEnd=weekEnd(wStart);
@@ -430,6 +548,7 @@ function handleCancel(sheet, body) {
   const {id,advisor}=body;
   if(!id) return jsonResponse({ok:false,message:"Falta el id."});
   const advisors=readAdvisors();
+  const cfg=readConfig();
   const data=sheet.getDataRange().getValues(), headers=data[0];
   const idx=buildIdx(headers,["id","date","time","advisor"]);
 
@@ -437,9 +556,11 @@ function handleCancel(sheet, body) {
     if(data[i][idx.id]!==id) continue;
     if(data[i][idx.advisor]!==advisor && !isAdmin(advisor,advisors))
       return jsonResponse({ok:false,message:"Solo puedes cancelar tus propias reservas."});
-    if(!isAdmin(advisor,advisors)){
-      const dt=new Date(normalizeDate(data[i][idx.date])+"T"+String(startHour(data[i][idx.time])).padStart(2,"0")+":00:00");
-      if((dt-new Date())<2*60*60*1000) return jsonResponse({ok:false,message:"No puedes cancelar con menos de 2h de anticipación."});
+    const dt=new Date(normalizeDate(data[i][idx.date])+"T"+String(startHour(data[i][idx.time])).padStart(2,"0")+":00:00");
+    if(cfg.reglaNoCancelarEjecutadas && dt<new Date() && !isAdmin(advisor,advisors))
+      return jsonResponse({ok:false,message:"No se pueden cancelar reservas que ya ocurrieron."});
+    if(cfg.reglaCancelacionAnticipada && !isAdmin(advisor,advisors)){
+      if((dt-new Date())<2*60*60*1000 && dt>new Date()) return jsonResponse({ok:false,message:"No puedes cancelar con menos de 2h de anticipación."});
     }
     sheet.deleteRow(i+1);
     return jsonResponse({ok:true});
@@ -461,29 +582,30 @@ function handleCreatePuesto(sheet, body) {
   const pc = pConfig.find(p=>p.id===puesto);
   if (!pc||!pc.disponible) return jsonResponse({ok:false,message:"Este puesto no está disponible."});
 
-  // Verificar puesto fijo — solo el asesor asignado (o admin) puede reservarlo
-  if (pc.puestoFijo && pc.puestoFijo.toLowerCase() !== "true") {
-    const lock0 = LockService.getScriptLock(); lock0.waitLock(10000);
-    try {
-      const advisors0 = readAdvisors();
-      if (!isAdmin(advisor, advisors0) && normalizeName(pc.puestoFijo) !== normalizeName(advisor))
-        return jsonResponse({ok:false,message:`Este puesto está asignado a ${pc.puestoFijo}.`});
-    } finally { lock0.releaseLock(); }
-  } else if (pc.puestoFijo && pc.puestoFijo.toLowerCase() === "true") {
+  // Puesto fijo bloqueado sin nombre ("true") — solo admins pueden reservarlo.
+  // Puesto fijo con nombre: se valida más abajo solo contra su horario bloqueado.
+  if (pc.puestoFijo && pc.puestoFijo.toLowerCase() === "true") {
     const advisors0 = readAdvisors();
-    if (!isAdmin(advisor, advisors0))
+    if (!isAdmin(body.solicitante || advisor, advisors0))
       return jsonResponse({ok:false,message:"Este puesto no está disponible para reservas."});
   }
 
   const lock=LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const advisors=readAdvisors();
+    const cfg=readConfig();
     const rec=findAdvisor(advisor,advisors);
     if(!rec)       return jsonResponse({ok:false,message:"Asesor no encontrado."});
     if(!rec.activo) return jsonResponse({ok:false,message:"Tu cuenta está desactivada."});
 
+    // Quien solicita puede ser un admin reservando a nombre de otro asesor
+    const actor = body.solicitante || advisor;
+    const actorEsAdmin = isAdmin(actor, advisors);
+    if (body.solicitante && normalizeName(body.solicitante)!==normalizeName(advisor) && !actorEsAdmin)
+      return jsonResponse({ok:false,message:"Solo un administrador puede reservar a nombre de otro asesor."});
+
     // Máximo 1 mes de anticipación (no-admins)
-    if(!isAdmin(advisor, advisors)){
+    if(!actorEsAdmin){
       const maxD=new Date(); maxD.setMonth(maxD.getMonth()+1);
       if(new Date(date+'T12:00:00Z')>maxD)
         return jsonResponse({ok:false,message:`Solo puedes reservar con máximo 1 mes de anticipación (hasta el ${maxD.toISOString().slice(0,10)}).`});
@@ -499,8 +621,19 @@ function handleCreatePuesto(sheet, body) {
     });
     if(conflict) return jsonResponse({ok:false,message:"Ese horario ya está ocupado en este puesto."});
 
-    // Reserva simultánea del mismo asesor (no-admins)
-    if(!isAdmin(advisor, advisors) && advisorHasConcurrentBooking(advisor, date, newStart, duration, null))
+    // Bloqueo por horario de puesto fijo (si la reserva se cruza con el horario bloqueado)
+    if (pc.puestoFijo && puesto !== "ESCENARIO") {
+      const esAsignado = pc.puestoFijo.toLowerCase()!=="true" && normalizeName(pc.puestoFijo)===normalizeName(advisor);
+      if (!esAsignado && !actorEsAdmin && rangesOverlap(newStart, newStart+duration, pc.horaEntrada, pc.horaSalida))
+        return jsonResponse({ok:false,message:`Este puesto está bloqueado de ${String(pc.horaEntrada).padStart(2,'0')}:00 a ${String(pc.horaSalida).padStart(2,'0')}:00.`});
+    }
+
+    // Reservas simultáneas del mismo asesor (configurable, no-admins)
+    if(!actorEsAdmin && puesto!=="ESCENARIO"){
+      if(cfg.soloUnPuestoALaVez && advisorHasConcurrentBooking(advisor, date, newStart, duration, null, 'puestos'))
+        return jsonResponse({ok:false,message:"Ya tienes un puesto reservado en ese horario. Solo puedes ocupar un puesto a la vez."});
+    }
+    if(!actorEsAdmin && !cfg.permitirReservasSimultaneas && advisorHasConcurrentBooking(advisor, date, newStart, duration, null, 'all'))
       return jsonResponse({ok:false,message:"Ya tienes una reserva en ese horario. No puedes tener dos reservas simultáneas."});
 
     const isEscenario = puesto === "ESCENARIO";
@@ -571,6 +704,7 @@ function handleCancelPuesto(sheet, body) {
   const {id,advisor}=body;
   if(!id) return jsonResponse({ok:false,message:"Falta el id."});
   const advisors=readAdvisors();
+  const cfg=readConfig();
   const data=sheet.getDataRange().getValues(), headers=data[0];
   const idx=buildIdx(headers,["id","date","time","advisor"]);
 
@@ -578,9 +712,11 @@ function handleCancelPuesto(sheet, body) {
     if(data[i][idx.id]!==id) continue;
     if(data[i][idx.advisor]!==advisor&&!isAdmin(advisor,advisors))
       return jsonResponse({ok:false,message:"Solo puedes cancelar tus propias reservas."});
-    if(!isAdmin(advisor,advisors)){
-      const dt=new Date(normalizeDate(data[i][idx.date])+"T"+String(startHour(data[i][idx.time])).padStart(2,"0")+":00:00");
-      if((dt-new Date())<12*60*60*1000) return jsonResponse({ok:false,message:"No puedes cancelar con menos de 12h de anticipación."});
+    const dt=new Date(normalizeDate(data[i][idx.date])+"T"+String(startHour(data[i][idx.time])).padStart(2,"0")+":00:00");
+    if(cfg.reglaNoCancelarEjecutadas && dt<new Date() && !isAdmin(advisor,advisors))
+      return jsonResponse({ok:false,message:"No se pueden cancelar reservas que ya ocurrieron."});
+    if(cfg.reglaCancelacionAnticipada && !isAdmin(advisor,advisors)){
+      if((dt-new Date())<12*60*60*1000 && dt>new Date()) return jsonResponse({ok:false,message:"No puedes cancelar con menos de 12h de anticipación."});
     }
     sheet.deleteRow(i+1);
     return jsonResponse({ok:true});

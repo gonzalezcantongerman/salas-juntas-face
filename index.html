@@ -311,6 +311,42 @@ table.dtbl tr:hover td{background:#FAFBFE;}
 footer{padding:14px 24px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
 footer a{color:var(--navy);text-decoration:none;font-weight:600;}
 footer a:hover{text-decoration:underline;}
+
+/* ── PIN ──────────────────────────────────────────────────────────────── */
+#pinWrap{display:none;margin-top:14px;}
+#pinInput{width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:22px;font-weight:700;text-align:center;letter-spacing:.5em;outline:none;}
+#pinInput:focus{border-color:var(--navy);}
+
+/* ── MÓVIL ────────────────────────────────────────────────────────────── */
+@media (max-width:640px){
+  header{padding:10px 12px;gap:8px;}
+  .hdr-left{gap:8px;}
+  .logo-plate{padding:5px 9px;}
+  .logo-plate img{height:18px;}
+  .mod-sw-btn{font-size:12px;padding:7px 10px;}
+  #userDropdownTrigger{padding:4px 6px;}
+  #userName{font-size:12px !important;}
+  .btn-logout{padding:4px 8px;font-size:11px;}
+  .tabs{padding:0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;top:56px;}
+  .tab-btn{padding:12px 12px;font-size:12px;flex-shrink:0;}
+  .tab-content{padding:12px;}
+  .panel{padding:16px 14px;border-radius:12px;}
+  .form-grid{grid-template-columns:1fr;gap:10px;}
+  .slot-grid{grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;}
+  .slot-grid-p{grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;}
+  .slot{padding:8px 4px;font-size:11.5px;}
+  .slot-p{padding:8px 3px;font-size:11px;}
+  table.dtbl{font-size:11.5px;}
+  table.dtbl th,table.dtbl td{padding:8px 6px;}
+  .modal-card{padding:22px 18px;width:94vw;}
+  .login-card{padding:28px 22px;}
+  .map-controls{gap:8px;}
+  .floor-wrap{padding:8px;}
+  .week-nav .week-range{font-size:13px;}
+  #userDropdownPanel{min-width:250px;right:-40px;}
+  #wifiPanel{min-width:240px;}
+  footer{padding:12px;font-size:11px;}
+}
 </style>
 </head>
 <body>
@@ -332,9 +368,13 @@ footer a:hover{text-decoration:underline;}
     <p>Selecciona tu nombre para continuar</p>
     <div class="field">
       <label>Tu nombre</label>
-      <select id="loginSelect"><option value="">— Cargando asesores… —</option></select>
+      <select id="loginSelect" onchange="onLoginSelectChange()"><option value="">— Cargando asesores… —</option></select>
     </div>
-    <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    <div id="pinWrap">
+      <label style="font-size:12px;font-weight:600;color:var(--dark);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Contraseña (4 dígitos)</label>
+      <input type="password" id="pinInput" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Entrar</button>
   </div>
 </div>
 
@@ -450,6 +490,10 @@ footer a:hover{text-decoration:underline;}
             <option value="3">3 horas</option>
             <option value="4">4 horas</option>
           </select>
+        </div>
+        <div class="field" id="sBookForWrap" style="display:none;">
+          <label>A nombre de 👑</label>
+          <select id="sBookFor" onchange="if(selectedSlot)selectSlot(selectedSlot.room,selectedSlot.time,selectedSlot.dur)"></select>
         </div>
       </div>
       <div id="weeklyUsageBar"></div>
@@ -606,6 +650,10 @@ footer a:hover{text-decoration:underline;}
           <label>Evento <span style="color:var(--red)">*</span></label>
           <input type="text" id="rEvento" placeholder="Título o descripción del evento…" maxlength="100">
         </div>
+        <div class="field" id="pBookForWrap" style="display:none;">
+          <label>A nombre de 👑</label>
+          <select id="pBookFor" onchange="onHoraFinChange()"></select>
+        </div>
       </div>
       <div class="week-bar-wrap" id="weekBarWrapP" style="display:none">
         <div class="week-bar-label">
@@ -707,6 +755,16 @@ let editDayBookings= [];
 let editStartH     = null;
 let editFinH       = null;
 let currentModule  = 'salas';
+// Flags de reglas (hoja Config del Excel) — defaults conservadores si el API no responde
+let appConfig = {soloUnPuestoALaVez:true,permitirReservasSimultaneas:false,reglaCancelacionAnticipada:true,reglaNoCancelarEjecutadas:true};
+
+async function loadAppConfig(){
+  try{
+    const res=await fetch(`${API_URL}?action=config`);
+    const data=await res.json();
+    if(data&&typeof data==='object'&&!Array.isArray(data)) appConfig={...appConfig,...data};
+  }catch{}
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function pad2(n){ return String(n).padStart(2,'0'); }
@@ -749,17 +807,23 @@ function isBookingPast(b){
   return new Date(y,m-1,day,h,0,0)<new Date();
 }
 function canCancelSalas(b,user){
-  if(!user||isBookingPast(b)) return false;
+  if(!user) return false;
   if(isAdmin(user)) return true;
-  if(b.advisor!==user&&!isAdmin(user)) return false;
+  if(isBookingPast(b)&&appConfig.reglaNoCancelarEjecutadas) return false;
+  if(b.advisor!==user) return false;
+  if(!appConfig.reglaCancelacionAnticipada) return true;
+  if(isBookingPast(b)) return true; // regla anticipación solo aplica a futuras
   const [y,m,day]=b.date.split('-').map(Number);
   const h=parseInt(b.time.split(':')[0],10);
   return (new Date(y,m-1,day,h,0,0)-new Date())>=2*3600*1000;
 }
 function canCancelP(b,user){
-  if(!user||isBookingPast(b)) return false;
+  if(!user) return false;
   if(isAdmin(user)) return true;
+  if(isBookingPast(b)&&appConfig.reglaNoCancelarEjecutadas) return false;
   if(normalizeName(b.advisor)!==normalizeName(user)) return false;
+  if(!appConfig.reglaCancelacionAnticipada) return true;
+  if(isBookingPast(b)) return true;
   const dt=new Date(b.date+'T'+pad2(parseInt(b.time.split(':')[0]))+':00:00');
   return (dt-new Date())>=12*3600*1000;
 }
@@ -767,6 +831,7 @@ function canEditP(b,user){
   if(!user||isBookingPast(b)) return false;
   if(normalizeName(b.advisor)!==normalizeName(user)&&!isAdmin(user)) return false;
   if(isAdmin(user)) return true;
+  if(!appConfig.reglaCancelacionAnticipada) return true;
   const dt=new Date(b.date+'T'+pad2(parseInt(b.time.split(':')[0]))+':00:00');
   return (dt-new Date())>=12*3600*1000;
 }
@@ -871,15 +936,36 @@ async function initAdvisors(){
   active.forEach(a=>{const o=document.createElement('option');o.value=a.nombre;o.textContent=a.nombre;sAdv.appendChild(o);});
 }
 
-function doLogin(){
+function onLoginSelectChange(){
+  const name=document.getElementById('loginSelect').value;
+  const adv=findAdvisor(name);
+  const needsPin=!!(adv&&adv.tienePassword);
+  document.getElementById('pinWrap').style.display=needsPin?'block':'none';
+  document.getElementById('pinInput').value='';
+}
+
+async function doLogin(){
   const name=document.getElementById('loginSelect').value;
   if(!name){ showToast('Selecciona tu nombre para continuar','err'); return; }
+  const adv=findAdvisor(name);
+  if(adv&&adv.tienePassword){
+    const pin=document.getElementById('pinInput').value.trim();
+    if(!/^\d{4}$/.test(pin)){ showToast('Ingresa tu contraseña de 4 dígitos','err'); return; }
+    const btn=document.getElementById('loginBtn'); btn.disabled=true; btn.textContent='Verificando…';
+    try{
+      const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'verifyPin',advisor:name,pin})});
+      const data=await res.json();
+      if(!data.ok){ showToast(data.message||'Contraseña incorrecta','err'); btn.disabled=false; btn.textContent='Entrar'; return; }
+    }catch{ showToast('Error de conexión al verificar','err'); btn.disabled=false; btn.textContent='Entrar'; return; }
+    btn.disabled=false; btn.textContent='Entrar';
+  }
   currentUser=name;
   safeSet('face_advisor',name);
   document.getElementById('loginOverlay').style.display='none';
   document.getElementById('userBox').style.display='flex';
   document.getElementById('userName').textContent=name.split(' ')[0];
   setDateInputLimits();
+  setupAdminUI();
   onAfterLogin();
 }
 function doLogout(){
@@ -933,6 +1019,7 @@ async function populateUserDropdown(){
     ${row('🏢','Salas de Juntas',usedS,limS)}
     ${row('🗂','Puestos de Trabajo',usedP,limP)}
     ${row('🎭','Escenario',usedE,limE)}
+    ${isAdmin(currentUser)?`<a href="panel.html" target="_blank" style="display:block;text-align:center;background:linear-gradient(135deg,var(--navy),var(--dark));color:#fff;font-size:12px;font-weight:700;padding:10px;border-radius:8px;text-decoration:none;margin-top:10px;">📊 Enviar a Panel Directivo ↗</a>`:''}
     <p style="font-size:10px;color:var(--muted);margin-top:4px;padding-top:10px;border-top:1px solid var(--border);line-height:1.6;">Estos límites se renuevan cada semana. Si crees que estás llegando o superando tu límite constantemente, comunícate con el área administrativa.</p>
   `;
 }
@@ -943,9 +1030,38 @@ document.addEventListener('click', e=>{
   if(panel&&box&&!box.contains(e.target)) panel.style.display='none';
 });
 
+// ─── UI de administrador ──────────────────────────────────────────────────────
+function setupAdminUI(){
+  const admin=isAdmin(currentUser);
+  ['sBookForWrap','pBookForWrap'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display=admin?'':'none';
+  });
+  if(!admin) return;
+  const active=advisorsData.filter(a=>a.activo).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  ['sBookFor','pBookFor'].forEach(selId=>{
+    const sel=document.getElementById(selId); if(!sel) return;
+    sel.innerHTML='';
+    active.forEach(a=>{
+      const o=document.createElement('option'); o.value=a.nombre; o.textContent=a.nombre;
+      if(normalizeName(a.nombre)===normalizeName(currentUser)) o.selected=true;
+      sel.appendChild(o);
+    });
+  });
+}
+// Beneficiario de la reserva: el admin puede elegir a otro; el resto siempre es él mismo
+function bookForName(mod){
+  if(!isAdmin(currentUser)) return currentUser;
+  const sel=document.getElementById(mod==='salas'?'sBookFor':'pBookFor');
+  return (sel&&sel.value)?sel.value:currentUser;
+}
+
 function onAfterLogin(){
-  const m=new URLSearchParams(location.search).get('m')||'salas';
+  const isMobile=window.matchMedia('(max-width:640px)').matches;
+  const mParam=new URLSearchParams(location.search).get('m');
+  const m=mParam||'salas';
   switchModule(m);
+  // En móvil, sin módulo explícito en la URL, aterrizar en "Reservar sala"
+  if(isMobile&&!mParam) setTimeout(()=>switchSalasTab('reservar'),80);
 }
 
 // ══════════════════════════ SALAS ═══════════════════════════════════════════
@@ -1077,7 +1193,7 @@ function selectSlot(roomId,time,dur){
   renderSlots(roomId,date,dur,bookings);
   const room=ROOMS.find(r=>r.id===roomId);
   const sH=parseInt(time.split(':')[0],10);
-  document.getElementById('sSelectionSummary').innerHTML=`<strong>${room.label}</strong> · ${fmtDate(date)} · de ${time} a ${hourLabel(Math.min(sH+dur,24))} hrs (${dur}h) · A nombre de <strong>${currentUser}</strong>`;
+  document.getElementById('sSelectionSummary').innerHTML=`<strong>${room.label}</strong> · ${fmtDate(date)} · de ${time} a ${hourLabel(Math.min(sH+dur,24))} hrs (${dur}h) · A nombre de <strong>${bookForName('salas')}</strong>`;
   document.getElementById('sConfirmPanel').style.display='';
   document.getElementById('sBookBtn').disabled=false;
 }
@@ -1087,7 +1203,7 @@ async function confirmBooking(){
   const btn=document.getElementById('sBookBtn'); btn.disabled=true; btn.textContent='Reservando…';
   const date=document.getElementById('sDateInput').value;
   try{
-    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'create',room:selectedSlot.room,date,time:selectedSlot.time,duration:selectedSlot.dur,advisor:currentUser})});
+    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'create',room:selectedSlot.room,date,time:selectedSlot.time,duration:selectedSlot.dur,advisor:bookForName('salas'),solicitante:currentUser})});
     const data=await res.json();
     if(data.ok){ showToast('Reserva confirmada ✓','ok'); selectedSlot=null; _weekUsageCache.wStart=null; await loadSlots(); loadCalendar(); }
     else showToast(data.message||'Error al reservar','err');
@@ -1505,9 +1621,10 @@ function onHoraFinChange(){
   const puesto=document.getElementById('rPuesto').value, date=document.getElementById('rDate').value;
   const cfg=getPuestoConfig(puesto); const dur=selectedFinP-selectedStartP;
   const evento=document.getElementById('rEvento').value.trim();
+  const beneficiario=bookForName('puestos');
   let line1=`<strong>${cfg.nombre||puesto}</strong>`;
-  if(puesto==='ESCENARIO'&&evento) line1=`<strong>🎭 ${evento}</strong> <span style="font-weight:400;color:var(--muted)">by ${currentUser}</span>`;
-  document.getElementById('confirmBoxP').innerHTML=`${line1}<br>📅 ${fmtDate(date)}<br>🕐 ${pad2(selectedStartP)}:00 – ${pad2(selectedFinP)}:00 (${dur}h)${puesto!=='ESCENARIO'?`<br>👤 ${currentUser}`:''}`;
+  if(puesto==='ESCENARIO'&&evento) line1=`<strong>🎭 ${evento}</strong> <span style="font-weight:400;color:var(--muted)">by ${beneficiario}</span>`;
+  document.getElementById('confirmBoxP').innerHTML=`${line1}<br>📅 ${fmtDate(date)}<br>🕐 ${pad2(selectedStartP)}:00 – ${pad2(selectedFinP)}:00 (${dur}h)${puesto!=='ESCENARIO'?`<br>👤 ${beneficiario}`:''}`;
   document.getElementById('confirmPanelP').style.display='block';
 }
 
@@ -1518,7 +1635,7 @@ async function confirmBookingP(){
   if(puesto==='ESCENARIO'&&!evento){ showToast('El campo Evento es obligatorio para el Escenario','err'); return; }
   const btn=document.getElementById('bookBtnP'); btn.disabled=true; btn.textContent='Reservando…';
   const dur=selectedFinP-selectedStartP;
-  const body={action:'createPuesto',puesto,date:document.getElementById('rDate').value,time:pad2(selectedStartP)+':00',duration:dur,advisor:currentUser};
+  const body={action:'createPuesto',puesto,date:document.getElementById('rDate').value,time:pad2(selectedStartP)+':00',duration:dur,advisor:bookForName('puestos'),solicitante:currentUser};
   if(evento) body.evento=evento;
   try{
     const res=await fetch(API_URL,{method:'POST',body:JSON.stringify(body)});
@@ -1643,7 +1760,7 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   document.getElementById('sDateInput').value=todayStr();
   document.getElementById('mapDate').value=todayStr();
 
-  await initAdvisors();
+  await Promise.all([initAdvisors(),loadAppConfig()]);
 
   const saved=safeGet('face_advisor');
   if(saved){
@@ -1657,6 +1774,7 @@ window.addEventListener('DOMContentLoaded',async ()=>{
     document.getElementById('userBox').style.display='flex';
     document.getElementById('userName').textContent=currentUser.split(' ')[0];
     setDateInputLimits();
+    setupAdminUI();
     onAfterLogin();
   } else {
     document.getElementById('loginOverlay').style.display='flex';

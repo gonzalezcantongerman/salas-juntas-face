@@ -332,6 +332,15 @@ main{padding:22px 28px 48px;max-width:1440px;margin:0 auto;}
   <div style="height:155px;position:relative"><canvas id="cHours"></canvas></div>
 </div>
 
+<!-- ── 6b. DEMANDA POR DÍA DE LA SEMANA ───────────────────────── -->
+<div class="hours-card">
+  <div class="chart-title">
+    <span>Demanda por día de la semana</span>
+    <span style="font-size:10px;font-weight:500;color:var(--muted);">todos los registros · color por intensidad</span>
+  </div>
+  <div style="height:155px;position:relative"><canvas id="cDays"></canvas></div>
+</div>
+
 <!-- ── 7. GRID DE ASESORES ──────────────────────────────────────── -->
 <div>
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
@@ -669,13 +678,19 @@ function renderCharts(m){
     },
     options:{
       responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
       scales:{
         x:{stacked:true,grid:{color:'transparent'},ticks:{color:txt,font:{size:10}}},
         y:{stacked:true,grid:{color:grid},ticks:{color:txt,font:{size:10}},min:0,title:{display:true,text:'Horas',color:txt,font:{size:10}}}
       },
       plugins:{
         legend:{position:'bottom',labels:{color:'rgba(255,255,255,.55)',boxWidth:10,padding:10,font:{size:11}}},
-        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y}h`,footer:items=>{const t=items.reduce((a,i)=>a+i.parsed.y,0);return`Total: ${t}h`;}}}
+        tooltip:{
+          callbacks:{
+            title:items=>{const t=items.reduce((a,i)=>a+i.parsed.y,0);return`Semana ${items[0].label} — Total: ${t}h`;},
+            label:c=>` ${c.dataset.label}: ${c.parsed.y}h`
+          }
+        }
       }
     }
   });
@@ -709,6 +724,39 @@ function renderCharts(m){
         y:{grid:{color:grid},ticks:{color:txt,font:{size:10}},min:0}
       },
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y} reservas registradas`}}}
+    }
+  });
+
+  // Demand by day of week (hours booked per weekday, all records)
+  const dayBuckets=new Array(7).fill(0); // 0=Lun … 6=Dom
+  [...salasAll,...puestosAll].filter(b=>!b.fixed&&b.date).forEach(b=>{
+    const d=new Date(b.date+'T12:00:00Z');
+    const dw=d.getUTCDay(); // 0=Dom
+    const idx=dw===0?6:dw-1;
+    dayBuckets[idx]+=(b.duration||1);
+  });
+  const dmx=Math.max(...dayBuckets,1);
+  if(charts.days)charts.days.destroy();
+  charts.days=new Chart(document.getElementById('cDays'),{
+    type:'bar',
+    data:{
+      labels:['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],
+      datasets:[{
+        data:dayBuckets,borderRadius:6,borderSkipped:false,
+        backgroundColor:dayBuckets.map(v=>{
+          const r=v/dmx;
+          if(r>0.75)return'#F59E0B';if(r>0.4)return'#3F4FA3';
+          return'rgba(139,152,217,.25)';
+        })
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{
+        x:{grid:{color:'transparent'},ticks:{color:txt,font:{size:10}}},
+        y:{grid:{color:grid},ticks:{color:txt,font:{size:10}},min:0}
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y}h reservadas`}}}
     }
   });
 }
